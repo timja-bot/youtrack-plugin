@@ -27,12 +27,16 @@ public class YouTrackBuildUpdater extends Recorder {
 
     private String name;
     private String bundleName;
+    private boolean markFixedIfUnstable;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName) {
+    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable) {
         this.name = name;
         this.bundleName = bundleName;
+        this.markFixedIfUnstable = markFixedIfUnstable;
     }
+
+
 
     public String getName() {
         return name;
@@ -54,7 +58,13 @@ public class YouTrackBuildUpdater extends Recorder {
         return BuildStepMonitor.NONE;
     }
 
+    public boolean isMarkFixedIfUnstable() {
+        return markFixedIfUnstable;
+    }
 
+    public void setMarkFixedIfUnstable(boolean markFixedIfUnstable) {
+        this.markFixedIfUnstable = markFixedIfUnstable;
+    }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
@@ -89,7 +99,11 @@ public class YouTrackBuildUpdater extends Recorder {
         YouTrackSaveFixedIssues action = build.getAction(YouTrackSaveFixedIssues.class);
         if(action != null) {
             List<String> issueIds = action.getIssueIds();
-            if(build.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
+            boolean stable = build.getResult().isBetterOrEqualTo(Result.SUCCESS);
+            boolean unstable = build.getResult().isBetterOrEqualTo(Result.UNSTABLE);
+
+
+            if(stable || (isMarkFixedIfUnstable() && unstable)) {
 
                 for (String issueId : issueIds) {
                 Issue issue = new Issue(issueId);
