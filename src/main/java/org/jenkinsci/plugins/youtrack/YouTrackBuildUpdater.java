@@ -28,12 +28,14 @@ public class YouTrackBuildUpdater extends Recorder {
     private String name;
     private String bundleName;
     private boolean markFixedIfUnstable;
+    private boolean onlyAddIfHasFixedIssues;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable) {
+    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues) {
         this.name = name;
         this.bundleName = bundleName;
         this.markFixedIfUnstable = markFixedIfUnstable;
+        this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
     }
 
 
@@ -66,12 +68,33 @@ public class YouTrackBuildUpdater extends Recorder {
         this.markFixedIfUnstable = markFixedIfUnstable;
     }
 
+    public boolean isOnlyAddIfHasFixedIssues() {
+        return onlyAddIfHasFixedIssues;
+    }
+
+    public void setOnlyAddIfHasFixedIssues(boolean onlyAddIfHasFixedIssues) {
+        this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
+    }
+
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
         YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
         if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
             return true;
+        }
+
+
+        YouTrackSaveFixedIssues action = build.getAction(YouTrackSaveFixedIssues.class);
+
+        //Return early if there is no build to be added
+        if(onlyAddIfHasFixedIssues) {
+            if(action == null) {
+                return true;
+            }
+            if(action.getIssueIds().isEmpty()) {
+                return true;
+            }
         }
 
         YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
@@ -96,7 +119,6 @@ public class YouTrackBuildUpdater extends Recorder {
             return true;
         }
 
-        YouTrackSaveFixedIssues action = build.getAction(YouTrackSaveFixedIssues.class);
         if(action != null) {
             List<String> issueIds = action.getIssueIds();
             boolean stable = build.getResult().isBetterOrEqualTo(Result.SUCCESS);

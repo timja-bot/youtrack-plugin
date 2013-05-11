@@ -14,10 +14,18 @@
         </label>
     </f:entry>
 
+    <f:entry title="" field="onlyAddIfHasFixedIssues">
+        <label>
+            <f:checkbox checked="${instance.onlyAddIfHasFixedIssues}"/>
+            Only add build to bundle if there are issue to be marked as Fixed in build for the build.
+        </label>
+    </f:entry>
+
     <f:entry title="" field="markFixedIfUnstable">
         <label>
             <f:checkbox checked="${instance.markFixedIfUnstable}"/>
             Mark issues as fixed in build even if build is unstable
         </label>
     </f:entry>
+
 </j:jelly>
