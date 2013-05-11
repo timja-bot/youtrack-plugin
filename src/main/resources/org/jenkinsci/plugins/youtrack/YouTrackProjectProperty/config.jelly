@@ -36,6 +36,18 @@
                 <f:checkbox name="youtrack.runAsEnabled" checked="${instance.runAsEnabled}"/>
             </f:entry>
 
+            <f:section title="Build updater settings">
+                <f:entry title="State field name" >
+                    <f:textbox name="youtrack.stateFieldName" />
+                </f:entry>
+
+                <f:entry title="Fixed values" >
+                    <f:textbox name="youtrack.fixedValues" />
+                </f:entry>
+
+            </f:section>
+
+
         </j:if>
     </f:optionalBlock>
 

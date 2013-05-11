@@ -291,7 +291,7 @@ public class YouTrackServer {
      * @param issueId the id of the issue.
      * @return the issue if any.
      */
-    public Issue getIssue(User user, String issueId) {
+    public Issue getIssue(User user, String issueId, String stateField) {
         try {
             URL url = new URL(serverUrl + "/rest/issue/" + issueId);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -305,7 +305,7 @@ public class YouTrackServer {
                 try {
                     SAXParserFactory factory = SAXParserFactory.newInstance();
                     SAXParser saxParser = factory.newSAXParser();
-                    Issue.IssueHandler issueHandler = new Issue.IssueHandler();
+                    Issue.IssueHandler issueHandler = new Issue.IssueHandler(stateField);
                     saxParser.parse(urlConnection.getInputStream(), issueHandler);
                     return issueHandler.getIssue();
                 } catch (ParserConfigurationException e) {

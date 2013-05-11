@@ -72,6 +72,19 @@ public class Issue {
         private Issue issue;
 
         /**
+         * State field name.
+         */
+        private String stateFieldName;
+
+
+        public IssueHandler(String stateFieldName) {
+            this.stateFieldName = stateFieldName;
+            if(stateFieldName == null || stateFieldName.equals("")) {
+                stateFieldName = "State";
+            }
+        }
+
+        /**
          * The resulting issue object.
          *
          * @return the issue.
@@ -107,7 +120,7 @@ public class Issue {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             super.endElement(uri, localName, qName);
             if (qName.equals("value")) {
-                if (currentField.equals("State")) {
+                if (currentField.equals(stateFieldName)) {
                     issue.state = stringBuilder.toString();
                 } else if (currentField.equals("summary")) {
                     issue.summary = stringBuilder.toString();

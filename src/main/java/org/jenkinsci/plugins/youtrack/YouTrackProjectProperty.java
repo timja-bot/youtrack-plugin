@@ -41,13 +41,21 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * The name of the group comment links should be visible for.
      */
     private String linkVisibility;
+    /**
+     * Name of state field to check for weather an issue is selected.
+     */
+    private String stateFieldName;
+    /**
+     * Comma-separated list of values that are seen as fixed.
+     */
+    private String fixedValues;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -55,6 +63,8 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.runAsEnabled = runAsEnabled;
         this.annotationsEnabled = annotationsEnabled;
         this.linkVisibility = linkVisibility;
+        this.stateFieldName = stateFieldName;
+        this.fixedValues = fixedValues;
     }
 
     @Override
@@ -181,6 +191,8 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setAnnotationsEnabled(annotationsEnabled);
             result.setRunAsEnabled(runAsEnabled);
             result.setLinkVisibility(linkVisibility);
+            result.setStateFieldName(stateFieldName);
+            result.setFixedValues(fixedValues);
         }
         return result;
     }

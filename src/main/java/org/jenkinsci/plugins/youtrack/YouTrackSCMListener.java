@@ -10,9 +10,7 @@ import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -106,12 +104,17 @@ public class YouTrackSCMListener extends SCMListener {
                             }
                         }
 
+                        String stateFieldName = "State";
+                        if(youTrackSite.getStateFieldName() != null && !youTrackSite.getStateFieldName().equals("")) {
+                            stateFieldName = youTrackSite.getStateFieldName();
+                        }
+
                         //Get the issue state, then apply command, and get the issue state again.
                         //to know whether the command has been marked as fixed, instead of trying to
                         //interpret the command. This means however that there is a possibility for
                         //the user to change state between the before and the after call, so the after
                         //state can be affected by something else than the command.
-                        Issue before = youTrackServer.getIssue(user, issueId);
+                        Issue before = youTrackServer.getIssue(user, issueId, stateFieldName);
                         String command = matcher.group(3);
                         boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail);
                         if(applied) {
@@ -119,9 +122,20 @@ public class YouTrackSCMListener extends SCMListener {
                         } else {
                             listener.getLogger().println("FAILED: Applying command: " + command + " to issue: " + issueId);
                         }
-                        Issue after = youTrackServer.getIssue(user, issueId);
+                        Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
 
-                        if(!before.getState().equals("Fixed") && after.getState().equals("Fixed")) {
+                        Set<String> fixedValues = new HashSet<String>();
+                        if(youTrackSite.getFixedValues() != null && !youTrackSite.getFixedValues().equals("")) {
+                            String values = youTrackSite.getFixedValues();
+                            String[] fixedValueArray = values.split(",");
+                            for (String fixedValueFromArray : fixedValueArray) {
+                                fixedValues.add(fixedValueFromArray);
+                            }
+                        } else {
+                            fixedValues.add("Fixed");
+                        }
+
+                        if(!fixedValues.contains(before.getState()) && fixedValues.contains(after.getState())) {
                             fixedIssues.add(after);
                         }
 

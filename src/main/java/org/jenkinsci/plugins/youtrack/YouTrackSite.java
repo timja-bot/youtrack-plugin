@@ -16,6 +16,8 @@ public class YouTrackSite {
     private transient boolean commentEnabled;
     private transient boolean annotationsEnabled;
     private transient String linkVisibility;
+    private transient String stateFieldName;
+    private transient String fixedValues;
 
     @DataBoundConstructor
     public YouTrackSite(String username, String password, String url) {
@@ -109,5 +111,21 @@ public class YouTrackSite {
 
     public void setLinkVisibility(String linkVisibility) {
         this.linkVisibility = linkVisibility;
+    }
+
+    public String getStateFieldName() {
+        return stateFieldName;
+    }
+
+    public void setStateFieldName(String stateFieldName) {
+        this.stateFieldName = stateFieldName;
+    }
+
+    public String getFixedValues() {
+        return fixedValues;
+    }
+
+    public void setFixedValues(String fixedValues) {
+        this.fixedValues = fixedValues;
     }
 }
