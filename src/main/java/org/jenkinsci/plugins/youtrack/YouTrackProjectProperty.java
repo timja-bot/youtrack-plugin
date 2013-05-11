@@ -37,18 +37,24 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      */
     private boolean annotationsEnabled;
 
+    /**
+     * The name of the group comment links should be visible for.
+     */
+    private String linkVisibility;
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
         this.commandsEnabled = commandsEnabled;
         this.runAsEnabled = runAsEnabled;
         this.annotationsEnabled = annotationsEnabled;
+        this.linkVisibility = linkVisibility;
     }
 
     @Override
@@ -102,6 +108,14 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
     public void setAnnotationsEnabled(boolean annotationsEnabled) {
         this.annotationsEnabled = annotationsEnabled;
+    }
+
+    public String getLinkVisibility() {
+        return linkVisibility;
+    }
+
+    public void setLinkVisibility(String linkVisibility) {
+        this.linkVisibility = linkVisibility;
     }
 
     public static final class DescriptorImpl extends JobPropertyDescriptor {
@@ -166,6 +180,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setCommandsEnabled(commandsEnabled);
             result.setAnnotationsEnabled(annotationsEnabled);
             result.setRunAsEnabled(runAsEnabled);
+            result.setLinkVisibility(linkVisibility);
         }
         return result;
     }

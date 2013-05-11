@@ -142,7 +142,7 @@ public class YouTrackSCMListener extends SCMListener {
                     if (matcher.groupCount() >= 1) {
                         String issueId = shortName + "-" + matcher.group(2);
                         //noinspection deprecation
-                        boolean comment = youTrackServer.comment(user, new Issue(issueId), "Related build: " + build.getAbsoluteUrl());
+                        boolean comment = youTrackServer.comment(user, new Issue(issueId), "Related build: " + build.getAbsoluteUrl(), youTrackSite.getLinkVisibility());
                         if(comment) {
                             listener.getLogger().println("Commented on " + issueId);
                         } else {

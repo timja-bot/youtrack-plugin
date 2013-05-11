@@ -24,6 +24,10 @@
                 <f:checkbox name="youtrack.commentsEnabled" checked="${instance.commentsEnabled}"/>
             </f:entry>
 
+            <f:entry title="Visible for group (default: all):">
+                <f:textbox name="youtrack.linkVisibility" value="${instance.linkVisibility}"/>
+            </f:entry>
+
             <f:entry title="Execute commands" field="execute">
                 <f:checkbox name="youtrack.commandsEnabled" checked="${instance.commandsEnabled}"/>
             </f:entry>

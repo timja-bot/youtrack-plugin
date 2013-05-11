@@ -86,9 +86,10 @@ public class YouTrackServer {
      * @param user    the currently logged in user.
      * @param issue   the issue to comment on.
      * @param comment the comment text.
+     * @param group   the group the comment should be visible to.
      * @return if comment was added.
      */
-    public boolean comment(User user, Issue issue, String comment) {
+    public boolean comment(User user, Issue issue, String comment, String group) {
         try {
             URL url = new URL(serverUrl + "/rest/issue/" + issue.getId() + "/execute");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -101,6 +102,9 @@ public class YouTrackServer {
 
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
             outputStreamWriter.write("comment=" + comment);
+            if (group != null && !group.equals("")) {
+                outputStreamWriter.write("&group=" + group);
+            }
             outputStreamWriter.flush();
 
             int responseCode = urlConnection.getResponseCode();
@@ -244,9 +248,10 @@ public class YouTrackServer {
 
     /**
      * Adds a build with the name to the bundle with the given name.
-     * @param user the logged in user.
+     *
+     * @param user       the logged in user.
      * @param bundleName the name of the bundle to add a build to.
-     * @param buildName the name of the build to add.
+     * @param buildName  the name of the build to add.
      */
     public boolean addBuildToBundle(User user, String bundleName, String buildName) {
         try {
@@ -265,7 +270,7 @@ public class YouTrackServer {
 
 
             int responseCode = urlConnection.getResponseCode();
-            if(responseCode == HttpURLConnection.HTTP_CREATED) {
+            if (responseCode == HttpURLConnection.HTTP_CREATED) {
                 return true;
             }
 
@@ -279,10 +284,10 @@ public class YouTrackServer {
 
     /**
      * Gets an issue by issue id.
-     *
+     * <p/>
      * Currently the only value retrieved is the State field.
      *
-     * @param user the user session.
+     * @param user    the user session.
      * @param issueId the id of the issue.
      * @return the issue if any.
      */

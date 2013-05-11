@@ -15,6 +15,7 @@ public class YouTrackSite {
     private transient boolean commandsEnabled;
     private transient boolean commentEnabled;
     private transient boolean annotationsEnabled;
+    private transient String linkVisibility;
 
     @DataBoundConstructor
     public YouTrackSite(String username, String password, String url) {
@@ -100,5 +101,13 @@ public class YouTrackSite {
 
     public void setCommentEnabled(boolean commentEnabled) {
         this.commentEnabled = commentEnabled;
+    }
+
+    public String getLinkVisibility() {
+        return linkVisibility;
+    }
+
+    public void setLinkVisibility(String linkVisibility) {
+        this.linkVisibility = linkVisibility;
     }
 }
