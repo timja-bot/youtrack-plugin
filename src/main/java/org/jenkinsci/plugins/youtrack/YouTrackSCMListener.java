@@ -20,72 +20,72 @@ public class YouTrackSCMListener extends SCMListener {
 
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changelog) throws Exception {
+        if (build.getRootBuild().equals(build)) {
+            YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+            if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
+                return;
+            }
 
-        YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
-        if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
-            return;
-        }
+            Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changelog.iterator();
 
-        Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changelog.iterator();
+            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            if (user == null) {
+                listener.getLogger().append("FALIED: log in with set YouTrack user");
+                return;
+            }
+            build.addAction(new YouTrackIssueAction(build.getProject()));
 
-        YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-        User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-        if(user == null) {
-            listener.getLogger().append("FALIED: log in with set YouTrack user");
-            return;
-        }
-        build.addAction(new YouTrackIssueAction(build.getProject()));
+            List<Project> projects = youTrackServer.getProjects(user);
+            build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
 
-        List<Project> projects = youTrackServer.getProjects(user);
-        build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
+            List<Issue> fixedIssues = new ArrayList<Issue>();
 
-        List<Issue> fixedIssues = new ArrayList<Issue>();
+            while (changeLogIterator.hasNext()) {
+                ChangeLogSet.Entry next = changeLogIterator.next();
+                String msg = next.getMsg();
 
-        while (changeLogIterator.hasNext()) {
-            ChangeLogSet.Entry next = changeLogIterator.next();
-            String msg = next.getMsg();
+                addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
 
-            addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+                if (youTrackSite.isCommandsEnabled()) {
+                    String[] lines = msg.split("\n");
 
-            if (youTrackSite.isCommandsEnabled()) {
-                String[] lines = msg.split("\n");
+                    for (int i = 0; i < lines.length; i++) {
+                        String line = lines[i];
+                        if (line.contains("#")) {
 
-                for (int i = 0; i < lines.length; i++) {
-                    String line = lines[i];
-                    if (line.contains("#")) {
-
-                        StringBuilder stringBuilder = new StringBuilder();
-                        for (Project project : projects) {
-                            stringBuilder.append("#").append(project.getShortName()).append("|");
-                        }
-                        stringBuilder.deleteCharAt(stringBuilder.length()-1);
-
-                        String comment = null;
-                        String issueStart = line.substring(line.indexOf("#")+1);
-
-                        if(i + 1 < lines.length) {
-                            String l = lines[i + 1];
-                            if(!l.contains("#")) {
-                                comment = l;
+                            StringBuilder stringBuilder = new StringBuilder();
+                            for (Project project : projects) {
+                                stringBuilder.append("#").append(project.getShortName()).append("|");
                             }
-                        }
+                            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
 
-                        Project p = null;
-                        for (Project project : projects) {
-                            if (issueStart.startsWith(project.getShortName() + "-")) {
-                                p = project;
+                            String comment = null;
+                            String issueStart = line.substring(line.indexOf("#") + 1);
+
+                            if (i + 1 < lines.length) {
+                                String l = lines[i + 1];
+                                if (!l.contains("#")) {
+                                    comment = l;
+                                }
                             }
-                        }
 
-                        findIssueId(youTrackSite, youTrackServer, user, fixedIssues, next, comment, issueStart, p, listener);
+                            Project p = null;
+                            for (Project project : projects) {
+                                if (issueStart.startsWith(project.getShortName() + "-")) {
+                                    p = project;
+                                }
+                            }
+
+                            findIssueId(youTrackSite, youTrackServer, user, fixedIssues, next, comment, issueStart, p, listener);
+                        }
                     }
                 }
             }
+
+            build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
+
         }
-
-        build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
-
-
         super.onChangeLogParsed(build, listener, changelog);
     }
 
