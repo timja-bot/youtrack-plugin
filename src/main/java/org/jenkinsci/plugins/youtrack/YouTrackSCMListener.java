@@ -97,13 +97,13 @@ public class YouTrackSCMListener extends SCMListener {
             while (matcher.find()) {
                 if (matcher.groupCount() >= 1) {
                     String issueId = p.getShortName() + "-" + matcher.group(2);
-                    if (!youTrackSite.isRunAsEnabled()) {
-                        youTrackServer.applyCommand(user, new Issue(issueId), matcher.group(3), comment, null);
-                    } else {
-                        String address = next.getAuthor().getProperty(Mailer.UserProperty.class).getAddress();
-                        User userByEmail = youTrackServer.getUserByEmail(user, address);
-                        if (userByEmail == null) {
-                            listener.getLogger().println("Failed to find user with e-mail: " + address);
+                        User userByEmail = null;
+                        if (youTrackSite.isRunAsEnabled()) {
+                            String address = next.getAuthor().getProperty(Mailer.UserProperty.class).getAddress();
+                            userByEmail = youTrackServer.getUserByEmail(user, address);
+                            if (userByEmail == null) {
+                                listener.getLogger().println("Failed to find user with e-mail: " + address);
+                            }
                         }
 
                         //Get the issue state, then apply command, and get the issue state again.
@@ -126,7 +126,7 @@ public class YouTrackSCMListener extends SCMListener {
                         }
 
                     }
-                }
+
             }
 
         }
