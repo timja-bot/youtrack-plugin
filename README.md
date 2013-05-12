@@ -1,5 +1,5 @@
-youtrack-plugin (beta)
-======================
+youtrack-plugin
+===============
 
 # License #
 youtrack-plugin is released under the MIT License. See the bundled LICENSE file for details.
