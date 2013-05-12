@@ -72,7 +72,7 @@ public class YouTrackIssueAction implements Action {
 
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                Issue issue = youTrackServer.getIssue(user, id);
+                Issue issue = youTrackServer.getIssue(user, id, youTrackSite.getStateFieldName());
 
                 Gson gson = new Gson();
                 String json = gson.toJson(issue);

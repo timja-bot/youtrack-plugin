@@ -80,7 +80,7 @@ public class Issue {
         public IssueHandler(String stateFieldName) {
             this.stateFieldName = stateFieldName;
             if(stateFieldName == null || stateFieldName.equals("")) {
-                stateFieldName = "State";
+                this.stateFieldName = "State";
             }
         }
 
