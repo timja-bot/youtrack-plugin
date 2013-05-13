@@ -5,8 +5,12 @@ import hudson.model.AbstractProject;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.util.CopyOnWriteList;
+import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.youtrack.youtrackapi.User;
+import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> {
@@ -168,7 +172,23 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             return "YouTrack Plugin";
         }
 
+        public FormValidation doTestConnection(
+                @QueryParameter("youtrack.url") final String url,
+                @QueryParameter("youtrack.username") final String username,
+                @QueryParameter("youtrack.password") final String password) {
 
+            YouTrackServer youTrackServer = new YouTrackServer(url);
+            if (username != null && !username.equals("")) {
+                User login = youTrackServer.login(username, password);
+                if(login != null) {
+                    return FormValidation.ok("Connection ok!");
+                } else {
+                    return FormValidation.error("Could not login with given options");
+                }
+            } else {
+                return FormValidation.ok();
+            }
+        }
     }
 
     public YouTrackSite getSite() {

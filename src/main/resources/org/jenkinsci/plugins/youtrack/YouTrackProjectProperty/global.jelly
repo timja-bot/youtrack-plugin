@@ -27,6 +27,12 @@
                     </f:entry>
                     <f:entry title="">
                         <div align="right">
+                            <f:validateButton title="Test Connection" progress="Testing..."
+                                              method="testConnection" with="youtrack.url,youtrack.username,youtrack.password" />
+                        </div>
+                    </f:entry>
+                    <f:entry title="">
+                        <div align="right">
                             <f:repeatableDeleteButton/>
                         </div>
                     </f:entry>

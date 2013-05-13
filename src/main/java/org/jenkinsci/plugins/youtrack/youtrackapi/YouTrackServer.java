@@ -229,15 +229,19 @@ public class YouTrackServer {
             outputStreamWriter.write("login=" + username + "&password=" + password);
             outputStreamWriter.flush();
 
-            Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
-            List<String> strings = headerFields.get("Set-Cookie");
+            int responseCode = urlConnection.getResponseCode();
+            if(responseCode == HttpURLConnection.HTTP_OK) {
+                Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
+                List<String> strings = headerFields.get("Set-Cookie");
 
-            User user = new User();
-            for (String string : strings) {
-                user.getCookies().add(string);
+                User user = new User();
+                for (String string : strings) {
+                    user.getCookies().add(string);
+                }
+                return user;
+            } else {
+                return null;
             }
-
-            return user;
         } catch (MalformedURLException e) {
             LOGGER.log(Level.WARNING, "Could not login", e);
         } catch (IOException e) {
