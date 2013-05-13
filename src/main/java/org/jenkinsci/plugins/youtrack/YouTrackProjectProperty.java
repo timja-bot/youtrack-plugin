@@ -13,6 +13,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
+
 public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> {
     /**
      * The name of the site.
@@ -170,6 +173,22 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         @Override
         public String getDisplayName() {
             return "YouTrack Plugin";
+        }
+
+        public FormValidation doVersionCheck(@QueryParameter final String value) throws IOException, ServletException {
+            return new FormValidation.URLCheck() {
+
+                @Override
+                protected FormValidation check() throws IOException, ServletException {
+                    YouTrackServer youTrackServer = new YouTrackServer(value);
+                    String[] version = youTrackServer.getVersion();
+                    if(version == null) {
+                        return FormValidation.warning("Could not get version, maybe because version is below 4.x");
+                    } else {
+                        return FormValidation.ok();
+                    }
+                }
+            }.check();
         }
 
         public FormValidation doTestConnection(

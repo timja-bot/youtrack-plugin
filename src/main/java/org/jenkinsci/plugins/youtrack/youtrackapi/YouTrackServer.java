@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -9,10 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -328,4 +327,61 @@ public class YouTrackServer {
     }
 
 
+    public String[] getVersion() {
+        try {
+            URL url = new URL(serverUrl + "/rest/workflow/version");
+            try {
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    VersionHandler versionHandler = new VersionHandler();
+                    saxParser.parse(urlConnection.getInputStream(), versionHandler);
+                    return versionHandler.version.split(".");
+                }
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Could not get version", e);
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get version", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get version", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Wrong url", e);
+        }
+        return null;
+    }
+
+    public static class VersionHandler extends DefaultHandler {
+        boolean inVersion = false;
+        private StringBuilder stringBuilder = new StringBuilder();
+        private String version;
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            super.startElement(uri, localName, qName, attributes);
+            if(qName.equals("version")) {
+                inVersion = true;
+            }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            super.characters(ch, start, length);
+            if (inVersion) {
+                stringBuilder.append(ch, start, length);
+            }
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            if(qName.equals("version")) {
+                inVersion = false;
+                version = stringBuilder.toString();
+            }
+            super.endElement(uri, localName, qName);
+        }
+
+
+    }
 }
