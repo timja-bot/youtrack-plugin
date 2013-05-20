@@ -2,21 +2,22 @@ package org.jenkinsci.plugins.youtrack;
 
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -163,5 +164,25 @@ public class YouTrackBuildUpdater extends Recorder {
         public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             return req.bindJSON(YouTrackBuildUpdater.class, formData);
         }
+
+        public AutoCompletionCandidates doAutoCompleteBundleName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if(youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if(user != null) {
+                    List<BuildBundle> bundles = youTrackServer.getBuildBundles(user);
+                    for (BuildBundle bundle : bundles) {
+                        if(bundle.getName().toLowerCase().contains(value.toLowerCase())) {
+                            autoCompletionCandidates.add(bundle.getName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
+        }
+
+
     }
 }

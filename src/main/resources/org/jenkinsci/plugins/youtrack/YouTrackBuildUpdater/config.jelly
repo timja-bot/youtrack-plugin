@@ -3,7 +3,7 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:entry title="" field="bundleName">
         <label>
-            <f:textbox value="${instance.bundleName}"/>
+            <f:textbox  />
             Bundle name to update
         </label>
     </f:entry>

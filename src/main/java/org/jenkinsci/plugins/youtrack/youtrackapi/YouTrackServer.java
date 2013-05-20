@@ -352,6 +352,38 @@ public class YouTrackServer {
         return null;
     }
 
+    public List<BuildBundle> getBuildBundles(User user) {
+        try {
+            URL url = new URL(serverUrl + "/rest/admin/customfield/buildBundle");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try {
+                    SAXParserFactory factory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = factory.newSAXParser();
+                    BuildBundle.Handler issueHandler = new BuildBundle.Handler();
+                    saxParser.parse(urlConnection.getInputStream(), issueHandler);
+                    return issueHandler.getBundles();
+                } catch (ParserConfigurationException e) {
+                    LOGGER.log(Level.WARNING, "Could not get issue", e);
+                } catch (SAXException e) {
+                    LOGGER.log(Level.WARNING, "Could not get issue", e);
+                }
+            }
+
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get issue", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get issue", e);
+        }
+        return null;
+    }
+
     public static class VersionHandler extends DefaultHandler {
         boolean inVersion = false;
         private StringBuilder stringBuilder = new StringBuilder();
@@ -384,4 +416,6 @@ public class YouTrackServer {
 
 
     }
+
+
 }
