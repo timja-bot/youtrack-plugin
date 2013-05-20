@@ -16,6 +16,9 @@
         <f:entry title="YouTrack sites" description="Here you setup the YouTrack sites you want to connect to. The specific site is then selected in the build configuration">
             <f:repeatable name="youtracksites" var="site" items="${descriptor.sites}">
                 <table width="100%">
+                    <f:entry title="YouTrack SiteName" field="name">
+                        <f:textbox name="youtrack.name" value="${site.name}"/>
+                    </f:entry>
                     <f:entry title="YouTrack URL" field="url">
                         <f:textbox name="youtrack.url" value="${site.url}" checkUrl="'${rootURL}/jobProperty/YouTrackProjectProperty/versionCheck?value='+escape(this.value)"/>
                     </f:entry>

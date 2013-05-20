@@ -7,6 +7,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  *
  */
 public class YouTrackSite {
+    private String name;
     private String url;
     private String username;
     private String password;
@@ -20,10 +21,11 @@ public class YouTrackSite {
     private transient String fixedValues;
 
     @DataBoundConstructor
-    public YouTrackSite(String username, String password, String url) {
+    public YouTrackSite(String name, String username, String password, String url) {
         this.username = username;
         this.password = password;
         this.url = url;
+        this.name = name;
     }
 
     public static YouTrackSite get(AbstractProject<?, ?> project) {
@@ -63,6 +65,14 @@ public class YouTrackSite {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean isPluginEnabled() {

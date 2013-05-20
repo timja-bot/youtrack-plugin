@@ -218,7 +218,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         }
 
         for (YouTrackSite site : sites) {
-            if (site.getUrl().equals(siteName)) {
+            if (site.getName().equals(siteName)) {
                 result = site;
                 break;
             }
