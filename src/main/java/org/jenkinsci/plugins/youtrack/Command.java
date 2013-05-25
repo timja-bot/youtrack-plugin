@@ -17,6 +17,7 @@ public class Command {
     private Status status;
     private String group;
     private Date date;
+    private boolean silent;
 
     public String getSiteName() {
         return siteName;
@@ -88,5 +89,13 @@ public class Command {
 
     public void setCommand(String command) {
         this.command = command;
+    }
+
+    public boolean isSilent() {
+        return silent;
+    }
+
+    public void setSilent(boolean silent) {
+        this.silent = silent;
     }
 }

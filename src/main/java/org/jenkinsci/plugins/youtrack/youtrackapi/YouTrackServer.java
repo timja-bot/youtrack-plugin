@@ -126,8 +126,9 @@ public class YouTrackServer {
      * @param command the command to apply.
      * @param comment comment with the command, null is allowed.
      * @param runAs   user to apply the command as, null is allowed.
+     * @param notify  notifies watchers.
      */
-    public boolean applyCommand(User user, Issue issue, String command, String comment, User runAs) {
+    public boolean applyCommand(User user, Issue issue, String command, String comment, User runAs, boolean notify) {
         try {
 
 
@@ -149,6 +150,9 @@ public class YouTrackServer {
             }
             if (runAs != null) {
                 str += "&runAs=" + runAs.getUsername();
+            }
+            if(!notify) {
+                str += "&disableNotifications=true";
             }
             outputStreamWriter.write(str);
             outputStreamWriter.flush();
@@ -229,7 +233,7 @@ public class YouTrackServer {
             outputStreamWriter.flush();
 
             int responseCode = urlConnection.getResponseCode();
-            if(responseCode == HttpURLConnection.HTTP_OK) {
+            if (responseCode == HttpURLConnection.HTTP_OK) {
                 Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
                 List<String> strings = headerFields.get("Set-Cookie");
 
@@ -332,7 +336,7 @@ public class YouTrackServer {
             URL url = new URL(serverUrl + "/rest/workflow/version");
             try {
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                if(urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
                     SAXParser saxParser = saxParserFactory.newSAXParser();
                     VersionHandler versionHandler = new VersionHandler();
@@ -392,7 +396,7 @@ public class YouTrackServer {
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             super.startElement(uri, localName, qName, attributes);
-            if(qName.equals("version")) {
+            if (qName.equals("version")) {
                 inVersion = true;
             }
         }
@@ -407,7 +411,7 @@ public class YouTrackServer {
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            if(qName.equals("version")) {
+            if (qName.equals("version")) {
                 inVersion = false;
                 version = stringBuilder.toString();
             }

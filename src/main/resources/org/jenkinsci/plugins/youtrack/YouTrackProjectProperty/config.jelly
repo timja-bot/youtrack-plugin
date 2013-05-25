@@ -17,32 +17,43 @@
             </f:entry>
 
             <f:entry title="Annotate changelog" field="annotations">
-                <f:checkbox  name="youtrack.annotationsEnabled" checked="${instance.annotationsEnabled}"/>
+                <f:checkbox name="youtrack.annotationsEnabled" checked="${instance.annotationsEnabled}"/>
             </f:entry>
 
-            <f:entry title="Update YouTrack issue with link to build" field="commentlink">
-                <f:checkbox name="youtrack.commentsEnabled" checked="${instance.commentsEnabled}"/>
-            </f:entry>
 
-            <f:entry title="Visible for group (default: all):">
-                <f:textbox name="youtrack.linkVisibility" value="${instance.linkVisibility}"/>
-            </f:entry>
-
-            <f:entry title="Execute commands" field="execute">
-                <f:checkbox name="youtrack.commandsEnabled" checked="${instance.commandsEnabled}"/>
-            </f:entry>
-
-            <f:entry title="Run as" field="runas">
-                <f:checkbox name="youtrack.runAsEnabled" checked="${instance.runAsEnabled}"/>
-            </f:entry>
-
-            <f:section title="Build updater settings">
-                <f:entry title="State field name" >
-                    <f:textbox name="youtrack.stateFieldName" />
+            <f:section title="Backlinks">
+                <f:entry title="Update YouTrack issue with link to build" field="commentlink">
+                    <f:checkbox name="youtrack.commentsEnabled" checked="${instance.commentsEnabled}"/>
                 </f:entry>
 
-                <f:entry title="Fixed values" >
-                    <f:textbox name="youtrack.fixedValues" />
+                <f:entry title="Visible for group (default: all):">
+                    <f:textbox name="youtrack.linkVisibility" value="${instance.linkVisibility}"/>
+                </f:entry>
+            </f:section>
+
+
+            <f:section title="Execute commands">
+                <f:entry title="Execute commands" field="execute">
+                    <f:checkbox name="youtrack.commandsEnabled" checked="${instance.commandsEnabled}"/>
+                </f:entry>
+
+                <f:entry title="Run as" field="runas">
+                    <f:checkbox name="youtrack.runAsEnabled" checked="${instance.runAsEnabled}"/>
+                </f:entry>
+
+                <f:entry title="Run silently" field="silentCommands">
+                    <f:checkbox name="youtrack.silentCommands" checked="${instance.silentCommands}"/>
+                </f:entry>
+            </f:section>
+
+
+            <f:section title="Build updater settings">
+                <f:entry title="State field name">
+                    <f:textbox name="youtrack.stateFieldName"/>
+                </f:entry>
+
+                <f:entry title="Fixed values">
+                    <f:textbox name="youtrack.fixedValues"/>
                 </f:entry>
 
             </f:section>

@@ -56,13 +56,17 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * Comma-separated list of values that are seen as fixed.
      */
     private String fixedValues;
+    /**
+     * Execute commands silently, i.e. do not notify watchers.
+     */
+    private boolean silentCommands;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -72,6 +76,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.linkVisibility = linkVisibility;
         this.stateFieldName = stateFieldName;
         this.fixedValues = fixedValues;
+        this.silentCommands = silentCommands;
     }
 
     @Override
@@ -133,6 +138,14 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
     public void setLinkVisibility(String linkVisibility) {
         this.linkVisibility = linkVisibility;
+    }
+
+    public boolean isSilentCommands() {
+        return silentCommands;
+    }
+
+    public void setSilentCommands(boolean silentCommands) {
+        this.silentCommands = silentCommands;
     }
 
     public static final class DescriptorImpl extends JobPropertyDescriptor {
@@ -232,6 +245,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setLinkVisibility(linkVisibility);
             result.setStateFieldName(stateFieldName);
             result.setFixedValues(fixedValues);
+            result.setSilentCommands(silentCommands);
         }
         return result;
     }

@@ -17,7 +17,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -131,7 +130,7 @@ public class YouTrackBuildUpdater extends Recorder {
                 for (String issueId : issueIds) {
                 Issue issue = new Issue(issueId);
 
-                    boolean success = youTrackServer.applyCommand(user, issue, "Fixed in build " + buildName, null, null);
+                    boolean success = youTrackServer.applyCommand(user, issue, "Fixed in build " + buildName, null, null, true);
                     if(success) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
                     } else {

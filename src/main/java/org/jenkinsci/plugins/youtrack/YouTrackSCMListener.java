@@ -137,13 +137,14 @@ public class YouTrackSCMListener extends SCMListener {
                     String command = matcher.group(4);
                     Command cmd = new Command();
                     cmd.setCommand(command);
+                    cmd.setSilent(youTrackSite.isSilentCommands());
                     cmd.setIssueId(issueId);
                     cmd.setUsername(user.getUsername());
                     cmd.setDate(new Date());
                     cmd.setSiteName(youTrackSite.getUrl());
                     cmd.setStatus(Command.Status.OK);
                     commands.add(cmd);
-                    boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail);
+                    boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail, !youTrackSite.isSilentCommands());
                     if (applied) {
                         listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
                     } else {
