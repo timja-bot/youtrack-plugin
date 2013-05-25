@@ -20,6 +20,7 @@ public class YouTrackSite {
     private transient String stateFieldName;
     private transient String fixedValues;
     private transient boolean silentCommands;
+    private transient boolean silentLinks;
 
     @DataBoundConstructor
     public YouTrackSite(String name, String username, String password, String url) {
@@ -146,5 +147,13 @@ public class YouTrackSite {
 
     public void setSilentCommands(boolean silentCommands) {
         this.silentCommands = silentCommands;
+    }
+
+    public boolean isSilentLinks() {
+        return silentLinks;
+    }
+
+    public void setSilentLinks(boolean silentLinks) {
+        this.silentLinks = silentLinks;
     }
 }

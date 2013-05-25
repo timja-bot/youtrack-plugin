@@ -11,7 +11,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +89,10 @@ public class YouTrackServer {
      * @param issue   the issue to comment on.
      * @param comment the comment text.
      * @param group   the group the comment should be visible to.
+     * @param silent  prevents wathcers from being notified.
      * @return if comment was added.
      */
-    public boolean comment(User user, Issue issue, String comment, String group) {
+    public boolean comment(User user, Issue issue, String comment, String group, boolean silent) {
         try {
             URL url = new URL(serverUrl + "/rest/issue/" + issue.getId() + "/execute");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -103,6 +107,9 @@ public class YouTrackServer {
             outputStreamWriter.write("comment=" + comment);
             if (group != null && !group.equals("")) {
                 outputStreamWriter.write("&group=" + group);
+            }
+            if(silent) {
+                outputStreamWriter.write("&disableNotifications=" + true);
             }
             outputStreamWriter.flush();
 
@@ -329,7 +336,6 @@ public class YouTrackServer {
         }
         return null;
     }
-
 
     public String[] getVersion() {
         try {

@@ -61,12 +61,17 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      */
     private boolean silentCommands;
 
+    /**
+     * Execute link comment silently.
+     */
+    private boolean silentLinks;
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -77,11 +82,20 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.stateFieldName = stateFieldName;
         this.fixedValues = fixedValues;
         this.silentCommands = silentCommands;
+        this.silentLinks = silentLinks;
     }
 
     @Override
     public JobPropertyDescriptor getDescriptor() {
         return DESCRIPTOR;
+    }
+
+    public boolean isSilentLinks() {
+        return silentLinks;
+    }
+
+    public void setSilentLinks(boolean silentLinks) {
+        this.silentLinks = silentLinks;
     }
 
     public boolean isPluginEnabled() {
@@ -246,6 +260,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setStateFieldName(stateFieldName);
             result.setFixedValues(fixedValues);
             result.setSilentCommands(silentCommands);
+            result.setSilentLinks(silentLinks);
         }
         return result;
     }

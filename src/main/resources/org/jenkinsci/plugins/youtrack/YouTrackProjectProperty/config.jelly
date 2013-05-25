@@ -29,6 +29,11 @@
                 <f:entry title="Visible for group (default: all):">
                     <f:textbox name="youtrack.linkVisibility" value="${instance.linkVisibility}"/>
                 </f:entry>
+
+                <f:entry title="Run silently" field="silentLinks">
+                    <f:checkbox name="youtrack.silentLinks" checked="${instance.silentLinks}"/>
+                </f:entry>
+
             </f:section>
 
 
