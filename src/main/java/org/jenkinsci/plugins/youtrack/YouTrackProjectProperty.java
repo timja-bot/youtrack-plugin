@@ -2,19 +2,24 @@ package org.jenkinsci.plugins.youtrack;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.JobProperty;
 import hudson.model.JobPropertyDescriptor;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Group;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.List;
 
 public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> {
     /**
@@ -234,6 +239,25 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             } else {
                 return FormValidation.ok();
             }
+        }
+
+
+        public AutoCompletionCandidates doAutoCompleteLinkVisibility(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if(youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if(user != null) {
+                    List<Group> groups = youTrackServer.getGroups(user);
+                    for (Group group : groups) {
+                        if(group.getName().toLowerCase().contains(value.toLowerCase())) {
+                            autoCompletionCandidates.add(group.getName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
         }
     }
 

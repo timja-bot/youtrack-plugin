@@ -43,6 +43,39 @@ public class YouTrackServer {
         this.serverUrl = serverUrl;
     }
 
+    public List<Group> getGroups(User user) {
+        List<Group> groups = new ArrayList<Group>();
+        try {
+            URL url = new URL(serverUrl + "/rest/admin/group");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    Group.GroupListHandler dh = new Group.GroupListHandler();
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    return dh.getGroups();
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return groups;
+    }
+
     /**
      * Gets all projects that the given user can see. The user shall be one obtained from {@link #login(String, String)}, i.e.
      * it should contains the cookie strings for the users login session.
