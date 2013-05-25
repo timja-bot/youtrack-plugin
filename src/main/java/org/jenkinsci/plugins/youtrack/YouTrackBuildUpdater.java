@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.youtrack;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.*;
@@ -103,19 +104,22 @@ public class YouTrackBuildUpdater extends Recorder {
             listener.getLogger().println("FAILED: to log in to youtrack");
             return true;
         }
-
+        EnvVars environment = build.getEnvironment(listener);
         String buildName;
         if(getName() == null || getName().equals("")) {
             buildName = String.valueOf(build.getNumber());
         } else {
-            buildName = String.valueOf(build.getNumber()) + " (" + name + ")";
+
+            buildName = String.valueOf(build.getNumber()) + " (" + environment.expand(name) + ")";
 
         }
-        boolean addedBuild = youTrackServer.addBuildToBundle(user, getBundleName(), buildName);
+        String inputBundleName =environment.expand(getBundleName());
+
+        boolean addedBuild = youTrackServer.addBuildToBundle(user, inputBundleName, buildName);
         if(addedBuild) {
-            listener.getLogger().println("Added build " + buildName + " to bundle: " + getBundleName());
+            listener.getLogger().println("Added build " + buildName + " to bundle: " + inputBundleName);
         } else {
-            listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + getBundleName());
+            listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + inputBundleName);
             return true;
         }
 
