@@ -84,6 +84,14 @@ public class YouTrackSCMListener extends SCMListener {
 
                     String comment = null;
                     String issueStart = line.substring(line.indexOf("#") + 1);
+                    boolean isSilent = false;
+                    int hashPosition = line.indexOf("#");
+                    if (hashPosition != 0) {
+                        char charBefore = line.charAt(hashPosition - 1);
+                        if(charBefore == '!') {
+                            isSilent = true;
+                        }
+                    }
 
                     if (i + 1 < lines.length) {
                         String l = lines[i + 1];
@@ -99,14 +107,14 @@ public class YouTrackSCMListener extends SCMListener {
                         }
                     }
 
-                    findIssueId(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, comment, issueStart, p, listener, commands);
+                    findIssueId(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, comment, issueStart, p, listener, commands, isSilent);
                 }
             }
         }
         return commands;
     }
 
-    private void findIssueId(YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String comment, String issueStart, Project p, BuildListener listener, List<Command> commands) {
+    private void findIssueId(YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String comment, String issueStart, Project p, BuildListener listener, List<Command> commands, boolean silent) {
         if (p != null) {
             Pattern projectPattern = Pattern.compile("(" + p.getShortName() + "-" + "(\\d+)" + ")( )?(.*)");
 
@@ -137,14 +145,15 @@ public class YouTrackSCMListener extends SCMListener {
                     String command = matcher.group(4);
                     Command cmd = new Command();
                     cmd.setCommand(command);
-                    cmd.setSilent(youTrackSite.isSilentCommands());
+                    boolean isSilent = youTrackSite.isSilentCommands() || silent;
+                    cmd.setSilent(isSilent);
                     cmd.setIssueId(issueId);
                     cmd.setUsername(user.getUsername());
                     cmd.setDate(new Date());
                     cmd.setSiteName(youTrackSite.getUrl());
                     cmd.setStatus(Command.Status.OK);
                     commands.add(cmd);
-                    boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail, !youTrackSite.isSilentCommands());
+                    boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail, !isSilent);
                     if (applied) {
                         listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
                     } else {
