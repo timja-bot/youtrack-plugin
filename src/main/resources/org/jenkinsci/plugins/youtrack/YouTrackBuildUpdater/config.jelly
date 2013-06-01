@@ -1,35 +1,36 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="" field="bundleName">
+    <f:entry title="${%bundleName}" field="bundleName">
         <label>
             <f:textbox  />
-            Bundle name to update
         </label>
     </f:entry>
-    <f:entry title="" field="name">
+    <f:entry title="${%buildNamePostfix}" field="name">
         <label>
-            <f:textbox value="${instance.name}"/>
-            Name appended to build number
+            <f:textbox />
         </label>
     </f:entry>
 
     <f:entry field="runSilently">
-        <f:checkbox checked="${instance.runSilently}" />
-        Run silently
+        <label>
+            <f:checkbox/>
+            ${%silently}
+        </label>
+
     </f:entry>
 
-    <f:entry title="" field="onlyAddIfHasFixedIssues">
+    <f:entry  field="onlyAddIfHasFixedIssues">
         <label>
-            <f:checkbox checked="${instance.onlyAddIfHasFixedIssues}"/>
-            Only add build to bundle if there are issue to be marked as Fixed in build for the build.
+            <f:checkbox />
+            ${%onlyAddIfHasFixedIssues}
         </label>
     </f:entry>
 
-    <f:entry title="" field="markFixedIfUnstable">
+    <f:entry field="markFixedIfUnstable">
         <label>
-            <f:checkbox checked="${instance.markFixedIfUnstable}"/>
-            Mark issues as fixed in build even if build is unstable
+            <f:checkbox/>
+            ${%markFixedIfUnstable}
         </label>
     </f:entry>
 
