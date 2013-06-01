@@ -14,6 +14,11 @@
         </label>
     </f:entry>
 
+    <f:entry field="runSilently">
+        <f:checkbox checked="${instance.runSilently}" />
+        Run silently
+    </f:entry>
+
     <f:entry title="" field="onlyAddIfHasFixedIssues">
         <label>
             <f:checkbox checked="${instance.onlyAddIfHasFixedIssues}"/>

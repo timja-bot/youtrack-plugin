@@ -30,13 +30,15 @@ public class YouTrackBuildUpdater extends Recorder {
     private String bundleName;
     private boolean markFixedIfUnstable;
     private boolean onlyAddIfHasFixedIssues;
+    private boolean runSilently;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues) {
+    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
         this.name = name;
         this.bundleName = bundleName;
         this.markFixedIfUnstable = markFixedIfUnstable;
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
+        this.runSilently = runSilently;
     }
 
 
@@ -75,6 +77,14 @@ public class YouTrackBuildUpdater extends Recorder {
 
     public void setOnlyAddIfHasFixedIssues(boolean onlyAddIfHasFixedIssues) {
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
+    }
+
+    public boolean isRunSilently() {
+        return runSilently;
+    }
+
+    public void setRunSilently(boolean runSilently) {
+        this.runSilently = runSilently;
     }
 
     @Override
@@ -134,7 +144,7 @@ public class YouTrackBuildUpdater extends Recorder {
                 for (String issueId : issueIds) {
                 Issue issue = new Issue(issueId);
 
-                    boolean success = youTrackServer.applyCommand(user, issue, "Fixed in build " + buildName, null, null, true);
+                    boolean success = youTrackServer.applyCommand(user, issue, "Fixed in build " + buildName, null, null, !runSilently);
                     if(success) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
                     } else {
