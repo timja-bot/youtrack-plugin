@@ -1,70 +1,79 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
     <!--
       This jelly script is used for per-project configuration.
 
       See global.jelly for a general discussion about jelly script.
     -->
-
-    <f:optionalBlock name="youtrack.pluginEnabled" title="Integrate with YouTrack" checked="${instance.pluginEnabled}">
-        <j:if test="${descriptor.sites.size() &gt; 0}">
-            <f:entry title="Youtrack Site">
-                <select class="setting-input" name="youtrack.siteName">
-                    <j:forEach var="s" items="${descriptor.sites}">
-                        <f:option selected="${s.name==instance.siteName}">${s.name}</f:option>
-                    </j:forEach>
-                </select>
-            </f:entry>
-
-            <f:entry title="Annotate changelog" field="annotations">
-                <f:checkbox name="youtrack.annotationsEnabled" checked="${instance.annotationsEnabled}"/>
-            </f:entry>
+    <f:section title="${%title}">
 
 
-            <f:section title="Backlinks">
-                <f:entry title="Update YouTrack issue with link to build" field="commentlink">
-                    <f:checkbox name="youtrack.commentsEnabled" checked="${instance.commentsEnabled}"/>
+        <f:optionalBlock name="youtrack.pluginEnabled" title="${%integrate}"
+                         checked="${instance.pluginEnabled}">
+            <j:if test="${descriptor.sites.size() &gt; 0}">
+                <f:entry title="${%site}" field="site">
+                    <select class="setting-input" name="youtrack.siteName">
+                        <j:forEach var="s" items="${descriptor.sites}">
+                            <f:option selected="${s.name==instance.siteName}">${s.name}</f:option>
+                        </j:forEach>
+                    </select>
                 </f:entry>
 
-                <f:entry title="Visible for group (default: all):" field="linkVisibility">
-                    <f:textbox name="youtrack.linkVisibility" value="${instance.linkVisibility}"/>
+                <f:entry field="annotationsEnabled">
+                    <label>
+                        <f:checkbox name="youtrack.annotationsEnabled"/>
+                        ${%annotateChangeLog}
+                    </label>
+
                 </f:entry>
 
-                <f:entry title="Run silently" field="silentLinks">
-                    <f:checkbox name="youtrack.silentLinks" checked="${instance.silentLinks}"/>
+                <f:block>
+                    <strong>${%backlinks}</strong>
+                </f:block>
+
+                <f:entry title="${%backlinks.enabled}" field="commentsEnabled">
+                    <f:checkbox name="youtrack.commentsEnabled" />
                 </f:entry>
 
-            </f:section>
-
-
-            <f:section title="Execute commands">
-                <f:entry title="Execute commands" field="execute">
-                    <f:checkbox name="youtrack.commandsEnabled" checked="${instance.commandsEnabled}"/>
+                <f:entry title="${%backlinks.visibility}" field="linkVisibility">
+                    <f:textbox name="youtrack.linkVisibility" />
                 </f:entry>
 
-                <f:entry title="Run as" field="runas">
-                    <f:checkbox name="youtrack.runAsEnabled" checked="${instance.runAsEnabled}"/>
+                <f:entry title="${%backlinks.silent}" field="silentLinks">
+                    <f:checkbox name="youtrack.silentLinks" />
                 </f:entry>
 
-                <f:entry title="Run silently" field="silentCommands">
-                    <f:checkbox name="youtrack.silentCommands" checked="${instance.silentCommands}"/>
-                </f:entry>
-            </f:section>
-
-
-            <f:section title="Build updater settings">
-                <f:entry title="State field name" field="stateFieldName">
-                    <f:textbox name="youtrack.stateFieldName" value="${instance.stateFieldName}"/>
+                <f:block>
+                    <strong>${%execute_commands}</strong>
+                </f:block>
+                <f:entry title="${%execute_commands.enabled}" field="commandsEnabled">
+                    <f:checkbox name="youtrack.commandsEnabled" />
                 </f:entry>
 
-                <f:entry title="Fixed values" field="fixedValues">
-                    <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues"  value="${instance.fixedValues}"/>
+                <f:entry title="${%execute_commands.run_as}" field="runAsEnabled">
+                    <f:checkbox name="youtrack.runAsEnabled" />
                 </f:entry>
 
-            </f:section>
+                <f:entry title="${%execute_commands.silent}" field="silentCommands">
+                    <f:checkbox name="youtrack.silentCommands" />
+                </f:entry>
+
+                <f:block>
+                    <strong>${%build_updater}</strong>
+                </f:block>
 
 
-        </j:if>
-    </f:optionalBlock>
+                <f:entry title="${%build_updater.field}" field="stateFieldName">
+                    <f:textbox name="youtrack.stateFieldName" />
+                </f:entry>
 
+                <f:entry title="${%build_updater.fixed_states}" field="fixedValues">
+                    <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues" />
+                </f:entry>
+
+
+            </j:if>
+        </f:optionalBlock>
+
+    </f:section>
 </j:jelly>

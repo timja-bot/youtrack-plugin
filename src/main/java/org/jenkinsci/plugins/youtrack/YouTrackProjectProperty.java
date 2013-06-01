@@ -19,6 +19,9 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Associates a YouTrack server and enables the users to set integration settings.
+ */
 public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> {
     /**
      * The name of the site.
