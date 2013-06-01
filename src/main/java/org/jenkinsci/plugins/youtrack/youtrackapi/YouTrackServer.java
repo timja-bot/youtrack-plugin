@@ -76,6 +76,154 @@ public class YouTrackServer {
         return groups;
     }
 
+
+    public List<StateBundle> getStateBundles(User user) {
+        List<StateBundle> bundles = new ArrayList<StateBundle>();
+        try {
+            URL url = new URL(serverUrl + "/rest/admin/group");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    StateBundle.StateBundleListHandler dh = new StateBundle.StateBundleListHandler();
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    return dh.getStateBundles();
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return bundles;
+    }
+
+    /**
+     * Gets a state bundle for the given name filled with the state values/
+     * @param user the user
+     * @param stateBundleName the name of the state bundle.
+     * @return the state bundle.
+     */
+    public StateBundle getStateBundleWithName(User user, String stateBundleName) {
+        try {
+            String stateBundleUrl = serverUrl + "/rest/admin/customfield/stateBundle/" + stateBundleName;
+            URL url = new URL(stateBundleUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    StateBundle stateBundle = new StateBundle(stateBundleName, stateBundleUrl);
+                    StateBundle.StateBundleHandler dh = new StateBundle.StateBundleHandler(stateBundle);
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    return stateBundle;
+
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return null;
+    }
+
+    public StateBundle getStateBundleForField(User user , String fieldName) {
+        try {
+            String fieldUrl = serverUrl + "/rest/admin/customfield/field/" + fieldName;
+            URL url = new URL(fieldUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    Field.FieldHandler dh = new Field.FieldHandler(fieldName, fieldUrl);
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    Field field = dh.getField();
+
+                    if (field.getType().equals("state[1]")) {
+                        StateBundle stateBundleWithName = getStateBundleWithName(user, field.getDefaultBundle());
+                        return stateBundleWithName;
+                    } else {
+                        return null;
+                    }
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return null;
+    }
+
+    public List<Field> getFields(User user) {
+        List<Field> fields = new ArrayList<Field>();
+        try {
+            URL url = new URL(serverUrl + "/rest/admin/customfield/field/");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    Field.FieldListHandler dh = new Field.FieldListHandler();
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    return dh.getFields();
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return fields;
+    }
+
     /**
      * Gets all projects that the given user can see. The user shall be one obtained from {@link #login(String, String)}, i.e.
      * it should contains the cookie strings for the users login session.

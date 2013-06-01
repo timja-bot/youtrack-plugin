@@ -53,12 +53,12 @@
 
 
             <f:section title="Build updater settings">
-                <f:entry title="State field name">
-                    <f:textbox name="youtrack.stateFieldName"/>
+                <f:entry title="State field name" field="stateFieldName">
+                    <f:textbox name="youtrack.stateFieldName" value="${instance.stateFieldName}"/>
                 </f:entry>
 
-                <f:entry title="Fixed values">
-                    <f:textbox name="youtrack.fixedValues"/>
+                <f:entry title="Fixed values" field="fixedValues">
+                    <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues"  value="${instance.fixedValues}"/>
                 </f:entry>
 
             </f:section>

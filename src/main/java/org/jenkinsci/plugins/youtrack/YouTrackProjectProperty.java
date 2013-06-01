@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.youtrack;
 
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.JobProperty;
@@ -8,10 +9,7 @@ import hudson.model.JobPropertyDescriptor;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Group;
-import org.jenkinsci.plugins.youtrack.youtrackapi.User;
-import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
+import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -167,6 +165,22 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.silentCommands = silentCommands;
     }
 
+    public String getStateFieldName() {
+        return stateFieldName;
+    }
+
+    public void setStateFieldName(String stateFieldName) {
+        this.stateFieldName = stateFieldName;
+    }
+
+    public String getFixedValues() {
+        return fixedValues;
+    }
+
+    public void setFixedValues(String fixedValues) {
+        this.fixedValues = fixedValues;
+    }
+
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         private final CopyOnWriteList<YouTrackSite> sites = new CopyOnWriteList<YouTrackSite>();
 
@@ -253,6 +267,44 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
                     for (Group group : groups) {
                         if(group.getName().toLowerCase().contains(value.toLowerCase())) {
                             autoCompletionCandidates.add(group.getName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
+        }
+
+        public AutoCompletionCandidates doAutoCompleteStateFieldName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if(youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if(user != null) {
+                    List<Field> fields = youTrackServer.getFields(user);
+                    for (Field field : fields) {
+                        if(field.getName().toLowerCase().contains(value.toLowerCase())) {
+                            autoCompletionCandidates.add(field.getName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
+        }
+
+        public AutoCompletionCandidates doAutoCompleteFixedValues(@AncestorInPath AbstractProject project,  @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if(youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if(user != null) {
+                    StateBundle bundle = youTrackServer.getStateBundleForField(user, youTrackSite.getStateFieldName());
+                    if (bundle != null) {
+                        for (State state : bundle.getStates()) {
+                            if(state.getValue().toLowerCase().contains(value.toLowerCase())) {
+                                autoCompletionCandidates.add(state.getValue());
+                            }
                         }
                     }
                 }

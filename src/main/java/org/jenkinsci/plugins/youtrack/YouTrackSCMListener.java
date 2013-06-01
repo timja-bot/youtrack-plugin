@@ -166,7 +166,9 @@ public class YouTrackSCMListener extends SCMListener {
                         String values = youTrackSite.getFixedValues();
                         String[] fixedValueArray = values.split(",");
                         for (String fixedValueFromArray : fixedValueArray) {
-                            fixedValues.add(fixedValueFromArray);
+                            if (!fixedValueFromArray.trim().equals("")) {
+                                fixedValues.add(fixedValueFromArray.trim());
+                            }
                         }
                     } else {
                         fixedValues.add("Fixed");
