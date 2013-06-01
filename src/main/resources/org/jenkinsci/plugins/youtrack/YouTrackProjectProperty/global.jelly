@@ -1,36 +1,24 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <!--
-      This Jelly script is used to produce the global configuration option.
-
-      Jenkins uses a set of tag libraries to provide uniformity in forms.
-      To determine where this tag is defined, first check the namespace URI,
-      and then look under $JENKINS/views/. For example, <f:section> is defined
-      in $JENKINS/views/lib/form/section.jelly.
-
-      It's also often useful to just check other similar scripts to see what
-      tags they use. Views are always organized according to its owner class,
-      so it should be straightforward to find them.
-    -->
-    <f:section title="YouTrack">
-        <f:entry title="YouTrack sites" description="Here you setup the YouTrack sites you want to connect to. The specific site is then selected in the build configuration">
+    <f:section title="${%header}">
+        <f:entry title="YouTrack sites" description="${%description}">
             <f:repeatable name="youtracksites" var="site" items="${descriptor.sites}">
                 <table width="100%">
-                    <f:entry title="YouTrack SiteName" field="name">
+                    <f:entry title="${%name}" field="name">
                         <f:textbox name="youtrack.name" value="${site.name}"/>
                     </f:entry>
-                    <f:entry title="YouTrack URL" field="url">
+                    <f:entry title="${%url}" field="url">
                         <f:textbox name="youtrack.url" value="${site.url}" checkUrl="'${rootURL}/jobProperty/YouTrackProjectProperty/versionCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="YouTrack Username" field="username">
+                    <f:entry title="${%username}" field="username">
                         <f:textbox name="youtrack.username" value="${site.username}"/>
                     </f:entry>
-                    <f:entry title="YouTrack Password" field="password">
+                    <f:entry title="${%password}" field="password">
                         <f:password name="youtrack.password" value="${site.password}"/>
                     </f:entry>
                     <f:entry title="">
                         <div align="right">
-                            <f:validateButton title="Test Connection" progress="Testing..."
+                            <f:validateButton title="${%testConnection}" progress="${%testing}"
                                               method="testConnection" with="youtrack.url,youtrack.username,youtrack.password" />
                         </div>
                     </f:entry>
