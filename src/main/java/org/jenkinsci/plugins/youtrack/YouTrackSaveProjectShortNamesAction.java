@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.youtrack;
 
 import hudson.Util;
-import hudson.model.Action;
 import hudson.model.InvisibleAction;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 

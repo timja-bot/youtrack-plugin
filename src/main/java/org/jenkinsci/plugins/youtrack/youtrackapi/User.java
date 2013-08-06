@@ -21,10 +21,23 @@ public class User {
     private transient List<String> cookies;
 
     /**
+     * True if the user object is logged in.
+     */
+    private boolean loggedIn;
+
+    /**
      * Constructs a user.
      */
     public User() {
         cookies = new ArrayList<String>();
+    }
+
+    public boolean isLoggedIn() {
+        return loggedIn;
+    }
+
+    public void setLoggedIn(boolean loggedIn) {
+        this.loggedIn = loggedIn;
     }
 
     /**

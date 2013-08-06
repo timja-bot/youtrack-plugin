@@ -6,7 +6,7 @@ import java.util.Date;
  * This class represents a command performed by this plugin.
  */
 public class Command {
-    enum Status {OK, FAILED}
+    public enum Status {OK, FAILED, NOT_LOGGED_IN}
 
     private String siteName;
     private String issueId;

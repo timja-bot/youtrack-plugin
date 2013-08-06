@@ -98,6 +98,12 @@ public class YouTrackBuildUpdater extends Recorder {
 
         YouTrackSaveFixedIssues action = build.getAction(YouTrackSaveFixedIssues.class);
 
+        YouTrackCommandAction youTrackCommandAction = build.getAction(YouTrackCommandAction.class);
+        if(youTrackCommandAction == null) {
+            youTrackCommandAction = new YouTrackCommandAction(build);
+            build.addAction(youTrackCommandAction);
+        }
+
         //Return early if there is no build to be added
         if(onlyAddIfHasFixedIssues) {
             if(action == null) {
@@ -110,7 +116,7 @@ public class YouTrackBuildUpdater extends Recorder {
 
         YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
         User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-        if(user == null) {
+        if(user == null || !user.isLoggedIn()) {
             listener.getLogger().println("FAILED: to log in to youtrack");
             return true;
         }
@@ -125,13 +131,14 @@ public class YouTrackBuildUpdater extends Recorder {
         }
         String inputBundleName =environment.expand(getBundleName());
 
-        boolean addedBuild = youTrackServer.addBuildToBundle(user, inputBundleName, buildName);
-        if(addedBuild) {
+        Command addedBuild = youTrackServer.addBuildToBundle(youTrackSite.getName(), user, inputBundleName, buildName);
+        if(addedBuild.getStatus() == Command.Status.OK) {
             listener.getLogger().println("Added build " + buildName + " to bundle: " + inputBundleName);
         } else {
             listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + inputBundleName);
-            return true;
         }
+
+        youTrackCommandAction.addCommand(addedBuild);
 
         if(action != null) {
             List<String> issueIds = action.getIssueIds();
@@ -144,12 +151,14 @@ public class YouTrackBuildUpdater extends Recorder {
                 for (String issueId : issueIds) {
                 Issue issue = new Issue(issueId);
 
-                    boolean success = youTrackServer.applyCommand(user, issue, "Fixed in build " + buildName, null, null, !runSilently);
-                    if(success) {
+                    String commandValue = "Fixed in build " + buildName;
+                    Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, !runSilently);
+                    if(command.getStatus() == Command.Status.OK) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
                     } else {
                         listener.getLogger().println("FAILED: updating Fixed in build to " + buildName + " for " + issueId);
                     }
+                    youTrackCommandAction.addCommand(command);
                 }
             }
 
@@ -178,6 +187,7 @@ public class YouTrackBuildUpdater extends Recorder {
             return req.bindJSON(YouTrackBuildUpdater.class, formData);
         }
 
+        @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteBundleName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();

@@ -58,6 +58,7 @@ public class YouTrackIssueAction implements Action {
      *
      * @return the response.
      */
+    @SuppressWarnings("UnusedDeclaration")
     public HttpResponse doIssue() {
 
         return new HttpResponse() {

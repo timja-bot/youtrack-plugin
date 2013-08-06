@@ -1,7 +1,7 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form">
     <!--
-      This jelly script is used for per-project configuration.
+      This jelly script is used for per-build configuration.
 
       See global.jelly for a general discussion about jelly script.
     -->

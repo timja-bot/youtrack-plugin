@@ -17,25 +17,47 @@ import java.util.regex.Pattern;
 public class YouTrackSCMListener extends SCMListener {
 
     @Override
-    public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changelog) throws Exception {
+    public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
         if (build.getRootBuild().equals(build)) {
             YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
             if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
                 return;
             }
 
-            Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changelog.iterator();
+            Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changeLogSet.iterator();
 
             YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
             User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-            if (user == null) {
-                listener.getLogger().append("FALIED: log in with set YouTrack user");
-                return;
+            if (user == null || !user.isLoggedIn()) {
+                listener.getLogger().append("FAILED: log in with set YouTrack user");
             }
             build.addAction(new YouTrackIssueAction(build.getProject()));
 
             List<Project> projects = youTrackServer.getProjects(user);
-            build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
+
+
+            if (projects != null) {
+                build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
+            } else {
+                AbstractBuild<?, ?> lastSuccessfulBuild = build.getProject().getLastStableBuild();
+                YouTrackSaveProjectShortNamesAction action = lastSuccessfulBuild.getAction(YouTrackSaveProjectShortNamesAction.class);
+                if (action != null) {
+                    List<String> shortNames = action.getShortNames();
+                    List<Project> previousProjects = new ArrayList<Project>();
+                    for (String shortName : shortNames) {
+                        Project prevProject = new Project();
+                        prevProject.setShortName(shortName);
+                        previousProjects.add(prevProject);
+                        projects = previousProjects;
+                    }
+                } else {
+                    projects = new ArrayList<Project>();
+                }
+            }
+
+
+            YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
+            build.addAction(commandAction);
 
             List<Issue> fixedIssues = new ArrayList<Issue>();
 
@@ -43,15 +65,22 @@ public class YouTrackSCMListener extends SCMListener {
                 ChangeLogSet.Entry next = changeLogIterator.next();
                 String msg = next.getMsg();
 
-                addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+                List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+                for (Command command : commands) {
+                    commandAction.addCommand(command);
+                }
 
-                executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, projects, fixedIssues, next, msg);
+
+                List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, projects, fixedIssues, next, msg);
+                for (Command command : commandList) {
+                    commandAction.addCommand(command);
+                }
             }
 
             build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
 
         }
-        super.onChangeLogParsed(build, listener, changelog);
+        super.onChangeLogParsed(build, listener, changeLogSet);
     }
 
     /**
@@ -80,7 +109,9 @@ public class YouTrackSCMListener extends SCMListener {
                     for (Project project : projects) {
                         stringBuilder.append("#").append(project.getShortName()).append("|");
                     }
-                    stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                    if (stringBuilder.length() > 0) {
+                        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+                    }
 
                     String comment = null;
                     String issueStart = line.substring(line.indexOf("#") + 1);
@@ -88,7 +119,7 @@ public class YouTrackSCMListener extends SCMListener {
                     int hashPosition = line.indexOf("#");
                     if (hashPosition != 0) {
                         char charBefore = line.charAt(hashPosition - 1);
-                        if(charBefore == '!') {
+                        if (charBefore == '!') {
                             isSilent = true;
                         }
                     }
@@ -143,22 +174,14 @@ public class YouTrackSCMListener extends SCMListener {
                     //state can be affected by something else than the command.
                     Issue before = youTrackServer.getIssue(user, issueId, stateFieldName);
                     String command = matcher.group(4);
-                    Command cmd = new Command();
-                    cmd.setCommand(command);
                     boolean isSilent = youTrackSite.isSilentCommands() || silent;
-                    cmd.setSilent(isSilent);
-                    cmd.setIssueId(issueId);
-                    cmd.setUsername(user.getUsername());
-                    cmd.setDate(new Date());
-                    cmd.setSiteName(youTrackSite.getUrl());
-                    cmd.setStatus(Command.Status.OK);
-                    commands.add(cmd);
-                    boolean applied = youTrackServer.applyCommand(user, new Issue(issueId), command, comment, userByEmail, !isSilent);
-                    if (applied) {
+                    Command cmd = youTrackServer.applyCommand(youTrackSite.getName(), user, new Issue(issueId), command, comment, userByEmail, !isSilent);
+                    if (cmd.getStatus() == Command.Status.OK) {
                         listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
                     } else {
                         listener.getLogger().println("FAILED: Applying command: " + command + " to issue: " + issueId);
                     }
+                    commands.add(cmd);
                     Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
 
                     Set<String> fixedValues = new HashSet<String>();
@@ -185,7 +208,8 @@ public class YouTrackSCMListener extends SCMListener {
         }
     }
 
-    private void addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener) {
+    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener) {
+        List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
                 String shortName = project1.getShortName();
@@ -195,8 +219,10 @@ public class YouTrackSCMListener extends SCMListener {
                     if (matcher.groupCount() >= 1) {
                         String issueId = shortName + "-" + matcher.group(2);
                         //noinspection deprecation
-                        boolean comment = youTrackServer.comment(user, new Issue(issueId), "Related build: " + build.getAbsoluteUrl(), youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
-                        if (comment) {
+                        String commentText = "Related build: " + build.getAbsoluteUrl();
+                        Command comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
+                        commands.add(comment);
+                        if (comment.getStatus() == Command.Status.OK) {
                             listener.getLogger().println("Commented on " + issueId);
                         } else {
                             listener.getLogger().println("FAILED: Commented on " + issueId);
@@ -205,6 +231,7 @@ public class YouTrackSCMListener extends SCMListener {
                 }
             }
         }
+        return commands;
     }
 
     @Override

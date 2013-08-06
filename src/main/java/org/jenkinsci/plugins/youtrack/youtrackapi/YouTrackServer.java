@@ -1,21 +1,21 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import org.jenkinsci.plugins.youtrack.Command;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -76,43 +76,10 @@ public class YouTrackServer {
         return groups;
     }
 
-
-    public List<StateBundle> getStateBundles(User user) {
-        List<StateBundle> bundles = new ArrayList<StateBundle>();
-        try {
-            URL url = new URL(serverUrl + "/rest/admin/group");
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-
-
-            for (String cookie : user.getCookies()) {
-
-                urlConnection.setRequestProperty("Cookie", cookie);
-            }
-
-            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-            try {
-                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    StateBundle.StateBundleListHandler dh = new StateBundle.StateBundleListHandler();
-                    saxParser.parse(urlConnection.getInputStream(), dh);
-                    return dh.getStateBundles();
-                }
-            } catch (ParserConfigurationException e) {
-                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
-            } catch (SAXException e) {
-                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
-            }
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
-        }
-        return bundles;
-    }
-
     /**
      * Gets a state bundle for the given name filled with the state values/
-     * @param user the user
+     *
+     * @param user            the user
      * @param stateBundleName the name of the state bundle.
      * @return the state bundle.
      */
@@ -151,7 +118,7 @@ public class YouTrackServer {
         return null;
     }
 
-    public StateBundle getStateBundleForField(User user , String fieldName) {
+    public StateBundle getStateBundleForField(User user, String fieldName) {
         try {
             String fieldUrl = serverUrl + "/rest/admin/customfield/field/" + fieldName;
             URL url = new URL(fieldUrl);
@@ -172,8 +139,7 @@ public class YouTrackServer {
                     Field field = dh.getField();
 
                     if (field.getType().equals("state[1]")) {
-                        StateBundle stateBundleWithName = getStateBundleWithName(user, field.getDefaultBundle());
-                        return stateBundleWithName;
+                        return getStateBundleWithName(user, field.getDefaultBundle());
                     } else {
                         return null;
                     }
@@ -232,7 +198,6 @@ public class YouTrackServer {
      * @return the list of projects the user can see.
      */
     public List<Project> getProjects(User user) {
-        List<Project> projects = new ArrayList<Project>();
         try {
             URL url = new URL(serverUrl + "/rest/project/all");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -259,29 +224,49 @@ public class YouTrackServer {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
         }
-        return projects;
+        return null;
 
     }
 
     /**
      * Adds a comment to the issue with currently logged in user.
      *
-     * @param user    the currently logged in user.
-     * @param issue   the issue to comment on.
-     * @param comment the comment text.
-     * @param group   the group the comment should be visible to.
-     * @param silent  prevents wathcers from being notified.
+     * @param siteName name of site configuration to comment on.
+     * @param user     the currently logged in user.
+     * @param issue    the issue to comment on.
+     * @param comment  the comment text.
+     * @param group    the group the comment should be visible to.
+     * @param silent   prevents watchers from being notified.
      * @return if comment was added.
      */
-    public boolean comment(User user, Issue issue, String comment, String group, boolean silent) {
+    public Command comment(String siteName, User user, Issue issue, String comment, String group, boolean silent) {
+        Command command = new Command();
+        command.setSiteName(siteName);
+        command.setIssueId(issue.getId());
+        command.setComment(comment);
+        command.setDate(new Date());
+        command.setGroup(group);
+        command.setSilent(silent);
+        if (user == null || !user.isLoggedIn()) {
+            command.setStatus(Command.Status.NOT_LOGGED_IN);
+        } else {
+            command.setStatus(Command.Status.FAILED);
+        }
+        if (user != null) {
+            command.setUsername(user.getUsername());
+        }
+
+
         try {
             URL url = new URL(serverUrl + "/rest/issue/" + issue.getId() + "/execute");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setDoOutput(true);
             urlConnection.setDoInput(true);
 
-            for (String cookie : user.getCookies()) {
-                urlConnection.setRequestProperty("Cookie", cookie);
+            if (user != null) {
+                for (String cookie : user.getCookies()) {
+                    urlConnection.setRequestProperty("Cookie", cookie);
+                }
             }
 
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
@@ -289,21 +274,43 @@ public class YouTrackServer {
             if (group != null && !group.equals("")) {
                 outputStreamWriter.write("&group=" + group);
             }
-            if(silent) {
+            if (silent) {
                 outputStreamWriter.write("&disableNotifications=" + true);
             }
             outputStreamWriter.flush();
 
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                return true;
+                command.setStatus(Command.Status.OK);
+                return command;
+            } else {
+                command.setStatus(Command.Status.FAILED);
+
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
+                String l;
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((l = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(l).append("\n");
+                }
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    ErrorHandler errorHandler = new ErrorHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+                    command.setResponse(errorHandler.errorMessage);
+                } catch (ParserConfigurationException e) {
+                    command.setResponse(e.getMessage());
+                } catch (SAXException e) {
+                    command.setResponse(e.getMessage());
+                }
             }
 
 
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not comment", e);
+            command.setResponse(e.getMessage());
         }
-        return false;
+        return command;
     }
 
     /**
@@ -316,7 +323,20 @@ public class YouTrackServer {
      * @param runAs   user to apply the command as, null is allowed.
      * @param notify  notifies watchers.
      */
-    public boolean applyCommand(User user, Issue issue, String command, String comment, User runAs, boolean notify) {
+    public Command applyCommand(String siteName, User user, Issue issue, String command, String comment, User runAs, boolean notify) {
+        Command cmd = new Command();
+        cmd.setCommand(command);
+        cmd.setSilent(!notify);
+        cmd.setIssueId(issue.getId());
+        cmd.setSiteName(siteName);
+        cmd.setDate(new Date());
+        cmd.setStatus(Command.Status.FAILED);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return cmd;
+        }
+        cmd.setUsername(user.getUsername());
         try {
 
 
@@ -339,7 +359,7 @@ public class YouTrackServer {
             if (runAs != null) {
                 str += "&runAs=" + runAs.getUsername();
             }
-            if(!notify) {
+            if (!notify) {
                 str += "&disableNotifications=true";
             }
             outputStreamWriter.write(str);
@@ -348,8 +368,12 @@ public class YouTrackServer {
             int responseCode = urlConnection.getResponseCode();
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                return true;
+                cmd.setStatus(Command.Status.OK);
+                return cmd;
             } else {
+
+
+                cmd.setStatus(Command.Status.FAILED);
 
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
                 String l;
@@ -357,14 +381,28 @@ public class YouTrackServer {
                 while ((l = bufferedReader.readLine()) != null) {
                     stringBuilder.append(l).append("\n");
                 }
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    ErrorHandler errorHandler = new ErrorHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+                    cmd.setResponse(errorHandler.errorMessage);
+                } catch (ParserConfigurationException e) {
+                    cmd.setResponse(e.getMessage());
+                } catch (SAXException e) {
+                    cmd.setResponse(e.getMessage());
+                }
+
+
                 LOGGER.log(Level.WARNING, "Could not apply command. Server response: " + stringBuilder.toString());
             }
 
 
         } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not apply command", e);
         }
-        return false;
+        return cmd;
     }
 
     /**
@@ -410,7 +448,10 @@ public class YouTrackServer {
      * @return user, null if fails to login
      */
     public User login(String username, String password) {
+
         try {
+            User user = new User();
+            user.setUsername(username);
             URL url = new URL(serverUrl + "/rest/user/login");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
@@ -421,17 +462,19 @@ public class YouTrackServer {
             outputStreamWriter.flush();
 
             int responseCode = urlConnection.getResponseCode();
+
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 Map<String, List<String>> headerFields = urlConnection.getHeaderFields();
                 List<String> strings = headerFields.get("Set-Cookie");
 
-                User user = new User();
                 for (String string : strings) {
                     user.getCookies().add(string);
                 }
+                user.setLoggedIn(true);
                 return user;
             } else {
-                return null;
+
+                return user;
             }
         } catch (MalformedURLException e) {
             LOGGER.log(Level.WARNING, "Could not login", e);
@@ -444,12 +487,26 @@ public class YouTrackServer {
     /**
      * Adds a build with the name to the bundle with the given name.
      *
+     * @param siteName   the name of the site to add bundle to.
      * @param user       the logged in user.
      * @param bundleName the name of the bundle to add a build to.
      * @param buildName  the name of the build to add.
      */
-    public boolean addBuildToBundle(User user, String bundleName, String buildName) {
+    public Command addBuildToBundle(String siteName, User user, String bundleName, String buildName) {
+        Command cmd = new Command();
+        cmd.setCommand("[Add '" + buildName + "' to " + " '" + bundleName + "']");
+        cmd.setDate(new Date());
+        cmd.setSiteName(siteName);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return cmd;
+        } else {
+            cmd.setStatus(Command.Status.FAILED);
+        }
+        user.setUsername(user.getUsername());
         try {
+
             String encode = URLEncoder.encode(bundleName, "ISO-8859-1").replace("+", "%20");
             String encode1 = URLEncoder.encode(buildName, "ISO-8859-1").replace("+", "%20");
             URL url = new URL(serverUrl + "/rest/admin/customfield/buildBundle/" + encode + "/" + encode1);
@@ -466,15 +523,38 @@ public class YouTrackServer {
 
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_CREATED) {
-                return true;
+                cmd.setStatus(Command.Status.OK);
+                return cmd;
+            } else {
+                cmd.setStatus(Command.Status.FAILED);
+
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
+                String l;
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((l = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(l).append("\n");
+                }
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    ErrorHandler errorHandler = new ErrorHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+                    cmd.setResponse(errorHandler.errorMessage);
+                } catch (ParserConfigurationException e) {
+                    cmd.setResponse(e.getMessage());
+                } catch (SAXException e) {
+                    cmd.setResponse(e.getMessage());
+                }
             }
 
         } catch (MalformedURLException e) {
+            cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not add to bundle", e);
         } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not add to bundle", e);
         }
-        return false;
+        return cmd;
     }
 
     /**
@@ -606,6 +686,38 @@ public class YouTrackServer {
         }
 
 
+    }
+
+    public static class ErrorHandler extends DefaultHandler {
+        private StringBuilder stringBuilder = new StringBuilder();
+        private boolean inError;
+        private String errorMessage;
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            super.startElement(uri, localName, qName, attributes);
+            if (qName.equals("error")) {
+                inError = true;
+                stringBuilder.setLength(0);
+            }
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            super.endElement(uri, localName, qName);
+            if (qName.equals("error")) {
+                errorMessage = stringBuilder.toString();
+                inError = false;
+            }
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            super.characters(ch, start, length);
+            if (inError) {
+                stringBuilder.append(ch, start, length);
+            }
+        }
     }
 
 

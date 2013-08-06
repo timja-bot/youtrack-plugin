@@ -43,31 +43,6 @@ public class StateBundle {
         return states;
     }
 
-    public static class StateBundleListHandler extends DefaultHandler {
-        private ArrayList<StateBundle> bundles;
-
-        @Override
-        public void startDocument() throws SAXException {
-            super.startDocument();
-            this.bundles = new ArrayList<StateBundle>();
-        }
-
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            super.startElement(uri, localName, qName, attributes);
-            if (qName.equals("stateBundle")) {
-                String bundleName = attributes.getValue("name");
-                String bundleUrl = attributes.getValue("url");
-                StateBundle stateBundle = new StateBundle(bundleName, bundleUrl);
-                bundles.add(stateBundle);
-            }
-        }
-
-        public List<StateBundle> getStateBundles() {
-            return bundles;
-        }
-    }
-
     public static class StateBundleHandler extends DefaultHandler {
         private StateBundle stateBundle;
         private StringBuilder stringBuilder = new StringBuilder();

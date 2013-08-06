@@ -84,8 +84,7 @@ public class Field {
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             super.startElement(uri, localName, qName, attributes);
             if (qName.equals("customFieldPrototype")) {
-                String fieldType = attributes.getValue("type");
-                field.type = fieldType;
+                field.type = attributes.getValue("type");
             }
             if (qName.equals("defaultParam") && attributes.getValue("name").equals("defaultBundle")) {
                 field.defaultBundle=  attributes.getValue("value");

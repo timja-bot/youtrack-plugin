@@ -21,7 +21,7 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
     public void annotate(AbstractBuild<?, ?> abstractBuild, ChangeLogSet.Entry entry, MarkupText markupText) {
         AbstractProject<?, ?> project = abstractBuild.getProject();
         YouTrackSite youTrackSite = YouTrackSite.get(project);
-        YouTrackSaveProjectShortNamesAction action = abstractBuild.getProject().getLastBuild().getAction(YouTrackSaveProjectShortNamesAction.class);
+        YouTrackSaveProjectShortNamesAction action = abstractBuild.getProject().getAction(YouTrackSaveProjectShortNamesAction.class);
         if (action != null) {
             List<String> shortNames = action.getShortNames();
 

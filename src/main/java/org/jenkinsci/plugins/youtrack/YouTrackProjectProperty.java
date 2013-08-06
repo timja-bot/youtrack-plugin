@@ -248,7 +248,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             YouTrackServer youTrackServer = new YouTrackServer(url);
             if (username != null && !username.equals("")) {
                 User login = youTrackServer.login(username, password);
-                if(login != null) {
+                if(login != null && login.isLoggedIn()) {
                     return FormValidation.ok("Connection ok!");
                 } else {
                     return FormValidation.error("Could not login with given options");
