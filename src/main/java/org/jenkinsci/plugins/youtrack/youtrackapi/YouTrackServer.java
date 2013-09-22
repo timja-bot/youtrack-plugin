@@ -43,6 +43,85 @@ public class YouTrackServer {
         this.serverUrl = serverUrl;
     }
 
+    public Command createIssue(String siteName, User user, String project, String title, String description, String command) {
+        Command cmd = new Command();
+        cmd.setCommand("[Create issue]");
+        cmd.setDate(new Date());
+        cmd.setSiteName(siteName);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return null;
+        } else {
+            cmd.setStatus(Command.Status.FAILED);
+        }
+        user.setUsername(user.getUsername());
+        try {
+
+            URL url = new URL(serverUrl + "/rest/issue");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setDoOutput(true);
+            urlConnection.setDoInput(true);
+            urlConnection.setRequestMethod("PUT");
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
+            outputStreamWriter.write("project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8"));
+
+            outputStreamWriter.flush();
+            outputStreamWriter.close();
+
+
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_CREATED) {
+                System.out.println("Created issue");
+                String location = urlConnection.getHeaderField("Location");
+                String issueId = location.substring(location.lastIndexOf("/") + 1);
+
+
+                Issue issue = new Issue(issueId);
+                if (command != null) {
+                    applyCommand(siteName, user, issue, command, "", null, false);
+                }
+
+                cmd.setStatus(Command.Status.OK);
+                return null;
+            } else {
+                cmd.setStatus(Command.Status.FAILED);
+
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
+                String l;
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((l = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(l).append("\n");
+                }
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    ErrorHandler errorHandler = new ErrorHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+                    cmd.setResponse(errorHandler.errorMessage);
+                } catch (ParserConfigurationException e) {
+                    cmd.setResponse(e.getMessage());
+                } catch (SAXException e) {
+                    cmd.setResponse(e.getMessage());
+                }
+                System.out.println("Did not create issue: " + cmd.getResponse());
+            }
+
+        } catch (MalformedURLException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+        } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+        }
+        return cmd;
+    }
+
     public List<Group> getGroups(User user) {
         List<Group> groups = new ArrayList<Group>();
         try {
