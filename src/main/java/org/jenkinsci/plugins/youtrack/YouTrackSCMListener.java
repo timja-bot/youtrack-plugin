@@ -57,7 +57,6 @@ public class YouTrackSCMListener extends SCMListener {
 
 
             YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
-            build.addAction(commandAction);
 
             List<Issue> fixedIssues = new ArrayList<Issue>();
 
@@ -77,8 +76,13 @@ public class YouTrackSCMListener extends SCMListener {
                 }
             }
 
-            build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
+            int numCommands = commandAction.getNumCommands();
 
+            if (numCommands > 0) {
+                build.addAction(commandAction);
+            }
+
+            build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
         }
         super.onChangeLogParsed(build, listener, changeLogSet);
     }

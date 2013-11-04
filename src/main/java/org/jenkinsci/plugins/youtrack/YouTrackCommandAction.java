@@ -37,6 +37,10 @@ public class YouTrackCommandAction implements Action {
         return commands.add(command);
     }
 
+    public int getNumCommands() {
+        return commands.size();
+    }
+
     public String getIconFileName() {
         return "plugin.png";
     }
