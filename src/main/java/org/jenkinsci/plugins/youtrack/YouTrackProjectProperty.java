@@ -1,15 +1,12 @@
 package org.jenkinsci.plugins.youtrack;
 
 import hudson.Extension;
-import hudson.RelativePath;
-import hudson.model.AbstractProject;
-import hudson.model.AutoCompletionCandidates;
-import hudson.model.JobProperty;
-import hudson.model.JobPropertyDescriptor;
+import hudson.model.*;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
+import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -187,6 +184,11 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         private final CopyOnWriteList<YouTrackSite> sites = new CopyOnWriteList<YouTrackSite>();
 
+        @Override
+        public boolean isApplicable(Class<? extends Job> jobType) {
+            return AbstractProject.class.isAssignableFrom(jobType);
+        }
+
         public DescriptorImpl() {
             super(YouTrackProjectProperty.class);
             load();
@@ -224,6 +226,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             return "YouTrack Plugin";
         }
 
+        @SuppressWarnings("UnusedDeclaration")
         public FormValidation doVersionCheck(@QueryParameter final String value) throws IOException, ServletException {
             return new FormValidation.URLCheck() {
 
@@ -240,6 +243,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             }.check();
         }
 
+        @SuppressWarnings("UnusedDeclaration")
         public FormValidation doTestConnection(
                 @QueryParameter("youtrack.url") final String url,
                 @QueryParameter("youtrack.username") final String username,
@@ -259,6 +263,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         }
 
 
+        @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteLinkVisibility(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
@@ -277,6 +282,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             return autoCompletionCandidates;
         }
 
+        @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteStateFieldName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
@@ -295,6 +301,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             return autoCompletionCandidates;
         }
 
+        @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteFixedValues(@AncestorInPath AbstractProject project,  @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
@@ -324,7 +331,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         }
 
         for (YouTrackSite site : sites) {
-            if (site.getName().equals(siteName)) {
+            if (site.getName() != null && site.getName().equals(siteName)) {
                 result = site;
                 break;
             }
