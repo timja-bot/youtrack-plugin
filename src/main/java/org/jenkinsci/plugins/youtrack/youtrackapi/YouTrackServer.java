@@ -647,7 +647,7 @@ public class YouTrackServer {
      */
     public Issue getIssue(User user, String issueId, String stateField) {
         try {
-            URL url = new URL(serverUrl + "/rest/issue/" + issueId);
+            URL url = new URL(serverUrl + "/rest/issue/" + issueId + "?wikifyDescription=true");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             for (String cookie : user.getCookies()) {
                 urlConnection.setRequestProperty("Cookie", cookie);

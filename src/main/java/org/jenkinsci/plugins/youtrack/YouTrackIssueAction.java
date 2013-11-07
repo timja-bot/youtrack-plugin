@@ -6,6 +6,10 @@ import hudson.model.Action;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -75,10 +79,29 @@ public class YouTrackIssueAction implements Action {
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
                 Issue issue = youTrackServer.getIssue(user, id, youTrackSite.getStateFieldName());
 
+                Document document = Jsoup.parse(issue.getDescription());
+                Elements imageElements = document.select("img");
+                for (Element imageElement : imageElements) {
+                    String src = imageElement.attr("src");
+                    if (!src.contains("://") && !src.startsWith("//")) {
+                        String url = youTrackSite.getUrl();
+                        String host = getDomainName(url);
+
+                        imageElement.attr("src",  host + src);
+                    }
+                }
+
+                issue.setDescription(document.html());
+
                 Gson gson = new Gson();
                 String json = gson.toJson(issue);
                 rsp.getWriter().write(json);
             }
         };
+    }
+
+    private String getDomainName(String url) {
+        int slashslash = url.indexOf("//") + 2;
+        return url.substring(0, slashslash ) + url.substring(slashslash, url.indexOf('/', slashslash));
     }
 }

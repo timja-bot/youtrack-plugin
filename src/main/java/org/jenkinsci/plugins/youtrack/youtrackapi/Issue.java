@@ -18,6 +18,18 @@ public class Issue {
     private String state;
 
     /**
+     * Title of issue.
+     */
+    private String summary;
+
+    private String resolved;
+
+    /**
+     * Summary of issue.
+     */
+    private String description;
+
+    /**
      * Constructs an issue object with the given id.
      *
      * @param id id of issue.
@@ -40,6 +52,38 @@ public class Issue {
      */
     public String getState() {
         return state;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getResolved() {
+        return resolved;
+    }
+
+    public void setResolved(String resolved) {
+        this.resolved = resolved;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**
@@ -110,6 +154,12 @@ public class Issue {
             if (qName.equals("value")) {
                 if (currentField.equals(stateFieldName)) {
                     issue.state = stringBuilder.toString();
+                } else if (currentField.equals("summary")) {
+                    issue.summary = stringBuilder.toString();
+                } else if (currentField.equals("description")) {
+                    issue.description = stringBuilder.toString();
+                } else if (currentField.equals("resolved")) {
+                    issue.resolved = stringBuilder.toString();
                 }
             }
         }
