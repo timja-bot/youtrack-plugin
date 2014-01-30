@@ -21,6 +21,7 @@ public class YouTrackSite {
     private transient String fixedValues;
     private transient boolean silentCommands;
     private transient boolean silentLinks;
+    private transient String project;
 
     @DataBoundConstructor
     public YouTrackSite(String name, String username, String password, String url) {
@@ -155,5 +156,13 @@ public class YouTrackSite {
 
     public void setSilentLinks(boolean silentLinks) {
         this.silentLinks = silentLinks;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 }
