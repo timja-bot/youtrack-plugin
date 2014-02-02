@@ -6,6 +6,7 @@ import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -69,12 +70,17 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      */
     private boolean silentLinks;
 
+    /**
+     * Limits the projects commands are applied to.
+     */
+    private String executeProjectLimits;
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -86,6 +92,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.fixedValues = fixedValues;
         this.silentCommands = silentCommands;
         this.silentLinks = silentLinks;
+        this.executeProjectLimits = executeProjectLimits;
     }
 
     @Override
@@ -179,6 +186,14 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
     public void setFixedValues(String fixedValues) {
         this.fixedValues = fixedValues;
+    }
+
+    public String getExecuteProjectLimits() {
+        return executeProjectLimits;
+    }
+
+    public void setExecuteProjectLimits(String executeProjectLimits) {
+        this.executeProjectLimits = executeProjectLimits;
     }
 
     public static final class DescriptorImpl extends JobPropertyDescriptor {
@@ -321,6 +336,25 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             }
             return autoCompletionCandidates;
         }
+
+        @SuppressWarnings("UnusedDeclaration")
+        public AutoCompletionCandidates doAutoCompleteExecuteProjectLimits(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if (youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if (user != null) {
+                    List<Project> projects = youTrackServer.getProjects(user);
+                    for (Project youtrackProject : projects) {
+                        if(youtrackProject.getShortName().toLowerCase().contains(value.toLowerCase())) {
+                            autoCompletionCandidates.add(youtrackProject.getShortName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
+        }
     }
 
     public YouTrackSite getSite() {
@@ -347,6 +381,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setFixedValues(fixedValues);
             result.setSilentCommands(silentCommands);
             result.setSilentLinks(silentLinks);
+            result.setExecuteProjectLimits(executeProjectLimits);
         }
         return result;
     }

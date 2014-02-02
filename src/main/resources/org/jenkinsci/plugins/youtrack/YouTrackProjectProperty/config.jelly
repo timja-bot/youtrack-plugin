@@ -58,6 +58,10 @@
                     <f:checkbox name="youtrack.silentCommands" />
                 </f:entry>
 
+                <f:entry title="${%execute_commands.project_limits}" field="executeProjectLimits">
+                    <f:textbox autoCompleteDelimChar="," name="youtrack.executeProjectLimits" />
+                </f:entry>
+
                 <f:block>
                     <strong>${%build_updater}</strong>
                 </f:block>

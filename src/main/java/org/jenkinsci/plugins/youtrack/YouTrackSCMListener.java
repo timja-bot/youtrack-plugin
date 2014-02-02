@@ -70,9 +70,21 @@ public class YouTrackSCMListener extends SCMListener {
                 }
 
 
-                List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, projects, fixedIssues, next, msg);
-                for (Command command : commandList) {
-                    commandAction.addCommand(command);
+                if (projects != null) {
+                    List<Project> youtrackProjects = new ArrayList<Project>(projects.size());
+                    Set<String> excludedProjectNames = getExcludedProjects(youTrackSite);
+
+
+                    for (Project project : projects) {
+                        if (!excludedProjectNames.contains(project.getShortName())) {
+                            youtrackProjects.add(project);
+                        }
+                    }
+
+                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
+                    for (Command command : commandList) {
+                        commandAction.addCommand(command);
+                    }
                 }
             }
 
@@ -85,6 +97,22 @@ public class YouTrackSCMListener extends SCMListener {
             build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
         }
         super.onChangeLogParsed(build, listener, changeLogSet);
+    }
+
+    private Set<String> getExcludedProjects(YouTrackSite youTrackSite) {
+        String executeProjectLimits = youTrackSite.getExecuteProjectLimits();
+        if (executeProjectLimits == null || !executeProjectLimits.trim().equals("")) {
+            return new HashSet<String>();
+        } else {
+            HashSet<String> nameSet = new HashSet<String>();
+            String[] names = executeProjectLimits.split(",");
+            for (String name : names) {
+                if (!name.trim().equals("")) {
+                    nameSet.add(name);
+                }
+            }
+            return nameSet;
+        }
     }
 
     /**
