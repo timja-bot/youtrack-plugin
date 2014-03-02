@@ -5,11 +5,13 @@ import hudson.model.BuildListener;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,6 +64,7 @@ public class YouTrackSCMListener extends SCMListener {
 
             while (changeLogIterator.hasNext()) {
                 ChangeLogSet.Entry next = changeLogIterator.next();
+
                 String msg = next.getMsg();
 
                 List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
@@ -81,11 +84,20 @@ public class YouTrackSCMListener extends SCMListener {
                         }
                     }
 
-                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
-                    for (Command command : commandList) {
-                        commandAction.addCommand(command);
+                    YouTrackPlugin plugin = Jenkins.getInstance().getPlugin(YouTrackPlugin.class);
+                    YoutrackProcessedRevisionsSaver revisionsSaver = plugin.getRevisionsSaver();
+                    if (!revisionsSaver.isProcessed(next.getCommitId())) {
+                        List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
+                        for (Command command : commandList) {
+                            commandAction.addCommand(command);
+                        }
+                        if (!commandList.isEmpty()) {
+
+                            revisionsSaver.addProcessed(next.getCommitId());
+                        }
                     }
                 }
+
             }
 
             int numCommands = commandAction.getNumCommands();
