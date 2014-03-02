@@ -69,23 +69,23 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * Execute link comment silently.
      */
     private boolean silentLinks;
-
     /**
      * Limits the projects commands are applied to.
      */
     private String executeProjectLimits;
-
     /**
      * Tracks the processed commits.
      */
     private boolean trackCommits;
-
-    @Extension
+    /**
+     * This is the default project for the integration, used for creating issues.
+     */
+    private String project;    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -99,6 +99,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.silentLinks = silentLinks;
         this.executeProjectLimits = executeProjectLimits;
         this.trackCommits = trackCommits;
+        this.project = project;
     }
 
     @Override
@@ -194,6 +195,14 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.fixedValues = fixedValues;
     }
 
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
     public String getExecuteProjectLimits() {
         return executeProjectLimits;
     }
@@ -209,7 +218,6 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     public void setTrackCommits(boolean trackCommits) {
         this.trackCommits = trackCommits;
     }
-
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         private final CopyOnWriteList<YouTrackSite> sites = new CopyOnWriteList<YouTrackSite>();
 
@@ -255,6 +263,26 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             return "YouTrack Plugin";
         }
 
+        public AutoCompletionCandidates doAutoCompleteProject(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            YouTrackSite youTrackSite = YouTrackSite.get(project);
+            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+            if (youTrackSite != null) {
+                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                if (user != null && user.isLoggedIn()) {
+                    List<Project> projects = youTrackServer.getProjects(user);
+                    for (Project youtrackProject : projects) {
+                        if (value == null || value.equals("")) {
+                            autoCompletionCandidates.add(value);
+                        } else if (youtrackProject.getShortName().toLowerCase().contains(value.toLowerCase())) {
+                            autoCompletionCandidates.add(youtrackProject.getShortName());
+                        }
+                    }
+                }
+            }
+            return autoCompletionCandidates;
+        }
+
         @SuppressWarnings("UnusedDeclaration")
         public FormValidation doVersionCheck(@QueryParameter final String value) throws IOException, ServletException {
             return new FormValidation.URLCheck() {
@@ -263,7 +291,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
                 protected FormValidation check() throws IOException, ServletException {
                     YouTrackServer youTrackServer = new YouTrackServer(value);
                     String[] version = youTrackServer.getVersion();
-                    if(version == null) {
+                    if (version == null) {
                         return FormValidation.warning("Could not get version, maybe because version is below 4.x");
                     } else {
                         return FormValidation.ok();
@@ -281,7 +309,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             YouTrackServer youTrackServer = new YouTrackServer(url);
             if (username != null && !username.equals("")) {
                 User login = youTrackServer.login(username, password);
-                if(login != null && login.isLoggedIn()) {
+                if (login != null && login.isLoggedIn()) {
                     return FormValidation.ok("Connection ok!");
                 } else {
                     return FormValidation.error("Could not login with given options");
@@ -296,13 +324,13 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         public AutoCompletionCandidates doAutoCompleteLinkVisibility(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if(youTrackSite != null) {
+            if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if(user != null) {
+                if (user != null) {
                     List<Group> groups = youTrackServer.getGroups(user);
                     for (Group group : groups) {
-                        if(group.getName().toLowerCase().contains(value.toLowerCase())) {
+                        if (group.getName().toLowerCase().contains(value.toLowerCase())) {
                             autoCompletionCandidates.add(group.getName());
                         }
                     }
@@ -315,13 +343,13 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         public AutoCompletionCandidates doAutoCompleteStateFieldName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if(youTrackSite != null) {
+            if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if(user != null) {
+                if (user != null) {
                     List<Field> fields = youTrackServer.getFields(user);
                     for (Field field : fields) {
-                        if(field.getName().toLowerCase().contains(value.toLowerCase())) {
+                        if (field.getName().toLowerCase().contains(value.toLowerCase())) {
                             autoCompletionCandidates.add(field.getName());
                         }
                     }
@@ -331,17 +359,17 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         }
 
         @SuppressWarnings("UnusedDeclaration")
-        public AutoCompletionCandidates doAutoCompleteFixedValues(@AncestorInPath AbstractProject project,  @QueryParameter String value) {
+        public AutoCompletionCandidates doAutoCompleteFixedValues(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if(youTrackSite != null) {
+            if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if(user != null) {
+                if (user != null) {
                     StateBundle bundle = youTrackServer.getStateBundleForField(user, youTrackSite.getStateFieldName());
                     if (bundle != null) {
                         for (State state : bundle.getStates()) {
-                            if(state.getValue().toLowerCase().contains(value.toLowerCase())) {
+                            if (state.getValue().toLowerCase().contains(value.toLowerCase())) {
                                 autoCompletionCandidates.add(state.getValue());
                             }
                         }
@@ -397,7 +425,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setSilentLinks(silentLinks);
             result.setExecuteProjectLimits(executeProjectLimits);
             result.setTrackCommits(trackCommits);
-        }
+            result.setProject(project);        }
         return result;
     }
 }

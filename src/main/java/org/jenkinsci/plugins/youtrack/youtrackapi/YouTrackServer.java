@@ -86,9 +86,9 @@ public class YouTrackServer {
                 if (command != null) {
                     applyCommand(siteName, user, issue, command, "", null, false);
                 }
-
+                cmd.setIssueId(issueId);
                 cmd.setStatus(Command.Status.OK);
-                return null;
+                return cmd;
             } else {
                 cmd.setStatus(Command.Status.FAILED);
 

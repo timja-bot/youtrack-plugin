@@ -79,6 +79,18 @@
                     <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues" />
                 </f:entry>
 
+                <f:block>
+                    <strong>${%testlinker.title}</strong>
+                    <p>
+                        ${%testlinker.summary}
+                    </p>
+                </f:block>
+
+                <f:entry title="${%testlinker.project}" field="project">
+                    <f:textbox name="youtrack.project" />
+                </f:entry>
+
+
 
             </j:if>
         </f:optionalBlock>
