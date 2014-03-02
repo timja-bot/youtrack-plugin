@@ -75,12 +75,17 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      */
     private String executeProjectLimits;
 
+    /**
+     * Tracks the processed commits.
+     */
+    private boolean trackCommits;
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -93,6 +98,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.silentCommands = silentCommands;
         this.silentLinks = silentLinks;
         this.executeProjectLimits = executeProjectLimits;
+        this.trackCommits = trackCommits;
     }
 
     @Override
@@ -194,6 +200,14 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
     public void setExecuteProjectLimits(String executeProjectLimits) {
         this.executeProjectLimits = executeProjectLimits;
+    }
+
+    public boolean isTrackCommits() {
+        return trackCommits;
+    }
+
+    public void setTrackCommits(boolean trackCommits) {
+        this.trackCommits = trackCommits;
     }
 
     public static final class DescriptorImpl extends JobPropertyDescriptor {
@@ -382,6 +396,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setSilentCommands(silentCommands);
             result.setSilentLinks(silentLinks);
             result.setExecuteProjectLimits(executeProjectLimits);
+            result.setTrackCommits(trackCommits);
         }
         return result;
     }

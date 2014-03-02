@@ -18,8 +18,8 @@ public class YoutrackProcessedRevisionsSaver {
     private final File file;
 
     public YoutrackProcessedRevisionsSaver() {
-        load();
         file = new File(Jenkins.getInstance().getRootDir(), "youtrack-processed");
+        load();
 
     }
 

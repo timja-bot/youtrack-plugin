@@ -1,0 +1,9 @@
+<p>
+    Enabling this will globally store the revision ids for the comment and use this to prevent commits being processed
+    multiple times. This is useful if there is a job per branch. The commit ids processed will be stored in Jenkins, so
+    if the jobs for each branch is on different Jenkins intances this will not work.
+</p>
+<p>
+    This option has to be checked for all jobs were the same commit can be in the changelog, i.e. if there is a
+    development job and a production job, then the option has to be checked for both.
+</p>

@@ -22,6 +22,7 @@ public class YouTrackSite {
     private transient boolean silentCommands;
     private transient boolean silentLinks;
     private transient String executeProjectLimits;
+    private boolean trackCommits;
 
     @DataBoundConstructor
     public YouTrackSite(String name, String username, String password, String url) {
@@ -164,5 +165,13 @@ public class YouTrackSite {
 
     public void setExecuteProjectLimits(String executeProjectLimits) {
         this.executeProjectLimits = executeProjectLimits;
+    }
+
+    public void setTrackCommits(boolean trackCommits) {
+        this.trackCommits = trackCommits;
+    }
+
+    public boolean isTrackCommits() {
+        return trackCommits;
     }
 }

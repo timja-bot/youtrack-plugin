@@ -86,13 +86,12 @@ public class YouTrackSCMListener extends SCMListener {
 
                     YouTrackPlugin plugin = Jenkins.getInstance().getPlugin(YouTrackPlugin.class);
                     YoutrackProcessedRevisionsSaver revisionsSaver = plugin.getRevisionsSaver();
-                    if (!revisionsSaver.isProcessed(next.getCommitId())) {
+                    if ((youTrackSite.isTrackCommits() && !revisionsSaver.isProcessed(next.getCommitId())) || !youTrackSite.isTrackCommits()) {
                         List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
                         for (Command command : commandList) {
                             commandAction.addCommand(command);
                         }
-                        if (!commandList.isEmpty()) {
-
+                        if (youTrackSite.isTrackCommits() && !commandList.isEmpty()) {
                             revisionsSaver.addProcessed(next.getCommitId());
                         }
                     }
