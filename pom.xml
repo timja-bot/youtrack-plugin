@@ -7,8 +7,8 @@
         <!-- which version of Jenkins is this plugin built against? -->
     </parent>
 
-    <artifactId>youtrack-plugin</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <artifactId>hbo-youtrack-plugin</artifactId>
+    <version>1.0</version>
     <packaging>hpi</packaging>
 
     <properties>
