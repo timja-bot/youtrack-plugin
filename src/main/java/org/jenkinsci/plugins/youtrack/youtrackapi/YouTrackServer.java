@@ -349,7 +349,7 @@ public class YouTrackServer {
             }
 
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.write("comment=" + comment);
+            outputStreamWriter.write("comment=" + URLEncoder.encode(comment, "UTF-8"));
             if (group != null && !group.equals("")) {
                 outputStreamWriter.write("&group=" + group);
             }
