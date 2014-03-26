@@ -410,6 +410,7 @@ public class YouTrackServer {
         cmd.setSiteName(siteName);
         cmd.setDate(new Date());
         cmd.setStatus(Command.Status.FAILED);
+        cmd.setComment(comment);
 
         if (user == null || !user.isLoggedIn()) {
             cmd.setStatus(Command.Status.NOT_LOGGED_IN);

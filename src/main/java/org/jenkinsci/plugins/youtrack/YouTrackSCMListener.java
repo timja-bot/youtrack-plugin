@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.youtrack;
 
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Run;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
@@ -12,6 +13,7 @@ import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -65,7 +67,21 @@ public class YouTrackSCMListener extends SCMListener {
             while (changeLogIterator.hasNext()) {
                 ChangeLogSet.Entry next = changeLogIterator.next();
 
-                String msg = next.getMsg();
+                String msg;
+                if (next.getClass().getCanonicalName().equals("hudson.plugins.git.GitChangeSet")) {
+
+                    try {
+                        Method getComment = next.getClass().getMethod("getComment");
+                        Object message = getComment.invoke(next);
+                        msg = (String) message;
+                    } catch (NoSuchMethodException e) {
+                        msg = next.getMsg();
+                    } catch (SecurityException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    msg = next.getMsg();
+                }
 
                 List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
                 for (Command command : commands) {
