@@ -10,6 +10,7 @@ import hudson.scm.ChangeLogSet;
 import org.apache.log4j.Logger;
 
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,14 +30,16 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
 
                 if (youTrackSite != null && youTrackSite.isPluginEnabled() && youTrackSite.isAnnotationsEnabled()) {
 
-                    String msg = entry.getMsg();
+                    String msg = markupText.getText();
+                    int i = 0;
+                    Random random = new Random();
                     for (String shortName : shortNames) {
                         Pattern projectPattern = Pattern.compile("(" + shortName + "-" + "(\\d+)" + ")");
                         Matcher matcher = projectPattern.matcher(msg);
                         while (matcher.find()) {
                             if (matcher.groupCount() >= 1) {
                                 String issueId = shortName + "-" + matcher.group(2);
-                                String commitId = "_" + entry.getMsg().hashCode();
+                                String commitId = "_" + entry.getMsg().hashCode() + "_"  + i++ + "_" + random.nextInt();
 
 
                                 String issueUrl = Hudson.getInstance().getRootUrl() + project.getLastSuccessfulBuild().getUrl() + "youtrack/issue?id=" + issueId;
