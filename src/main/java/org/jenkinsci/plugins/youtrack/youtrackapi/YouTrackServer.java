@@ -83,7 +83,7 @@ public class YouTrackServer {
 
 
                 Issue issue = new Issue(issueId);
-                if (command != null) {
+                if (command != null && !command.equals("")) {
                     applyCommand(siteName, user, issue, command, "", null, false);
                 }
                 cmd.setIssueId(issueId);

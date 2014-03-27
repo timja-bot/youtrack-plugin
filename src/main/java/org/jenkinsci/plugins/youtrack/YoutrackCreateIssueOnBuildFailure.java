@@ -116,10 +116,10 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
             String description = environment.expand(this.description);
             String command = environment.expand(this.command);
 
-            if (title == null) {
+            if (title == null || "".equals(title)) {
                 title = "Build failure in build " + build.getNumber();
             }
-            if (description == null) {
+            if (description == null || "".equals(description)) {
                 description = build.getAbsoluteUrl();
             }
 
