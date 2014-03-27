@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.youtrack;
 
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
-import hudson.model.Run;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
@@ -12,7 +11,6 @@ import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -91,11 +89,11 @@ public class YouTrackSCMListener extends SCMListener {
 
                 if (projects != null) {
                     List<Project> youtrackProjects = new ArrayList<Project>(projects.size());
-                    Set<String> excludedProjectNames = getExcludedProjects(youTrackSite);
+                    Set<String> includedProjects = getIncludedProjects(youTrackSite);
 
 
                     for (Project project : projects) {
-                        if (!excludedProjectNames.contains(project.getShortName())) {
+                        if (includedProjects.contains(project.getShortName())) {
                             youtrackProjects.add(project);
                         }
                     }
@@ -126,7 +124,7 @@ public class YouTrackSCMListener extends SCMListener {
         super.onChangeLogParsed(build, listener, changeLogSet);
     }
 
-    private Set<String> getExcludedProjects(YouTrackSite youTrackSite) {
+    private Set<String> getIncludedProjects(YouTrackSite youTrackSite) {
         String executeProjectLimits = youTrackSite.getExecuteProjectLimits();
         if (executeProjectLimits == null || !executeProjectLimits.trim().equals("")) {
             return new HashSet<String>();
