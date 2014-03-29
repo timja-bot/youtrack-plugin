@@ -25,7 +25,21 @@ public class YoutrackTestDataPublisher extends TestDataPublisher {
 
     @Override
     public TestResultAction.Data getTestData(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, TestResult testResult) throws IOException, InterruptedException {
-        return new Data(build);
+        Data data = new Data(build);
+
+        List<CaseResult> failedTests = testResult.getFailedTests();
+        for (CaseResult failedTest : failedTests) {
+            CaseResult previousResult = failedTest.getPreviousResult();
+            if (previousResult != null) {
+                YouTrackTestAction previousAction = previousResult.getTestAction(YouTrackTestAction.class);
+                if (previousAction != null && previousAction.getYoutrackIssueId() != null) {
+                    YouTrackTestAction youTrackTestAction = new YouTrackTestAction(data, failedTest, failedTest.getId(), previousAction.getYoutrackIssueId());
+                    data.addLink(testResult.getId(), youTrackTestAction);
+                }
+            }
+        }
+        return data;
+
     }
 
     public static class Data extends TestResultAction.Data implements Saveable {
@@ -45,29 +59,16 @@ public class YoutrackTestDataPublisher extends TestDataPublisher {
         public List<TestAction> getTestAction(TestObject testObject) {
             String id = testObject.getId();
 
+            YouTrackTestAction result = links.get(id);
+
+            if (result != null) {
+                return Collections.<TestAction>singletonList(result);
+            }
+
             if (testObject instanceof CaseResult) {
-                CaseResult cr = (CaseResult) testObject;
-                if (!cr.isPassed() && !cr.isSkipped()) {
-
-                    YouTrackTestAction youTrackTestAction = null;
-                    CaseResult previousResult = cr.getPreviousResult();
-
-                    youTrackTestAction = links.get(id);
-
-                    if (youTrackTestAction == null && !links.containsKey(id)) {
-                        if (previousResult != null) {
-                            YouTrackTestAction testAction = previousResult.getTestAction(YouTrackTestAction.class);
-                            if (testAction != null) {
-                                youTrackTestAction = new YouTrackTestAction(this, (CaseResult) testObject, id, testAction.getYoutrackIssueId());
-                            }
-                        }
-                    }
-
-                    if (youTrackTestAction == null) {
-                        youTrackTestAction = new YouTrackTestAction(this, (CaseResult) testObject, id, null);
-                    }
-
-                    return Collections.<TestAction>singletonList(youTrackTestAction);
+                CaseResult caseResult = (CaseResult) testObject;
+                if (!caseResult.isPassed() && !caseResult.isSkipped()) {
+                    return Collections.<TestAction>singletonList(new YouTrackTestAction(this, caseResult, id, null));
                 }
             }
 
