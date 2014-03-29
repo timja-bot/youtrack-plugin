@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>youtrack-plugin</artifactId>
-    <version>0.5-SNAPSHOT</version>
+    <version>0.5-beta3</version>
     <packaging>hpi</packaging>
 
     <properties>
