@@ -58,22 +58,15 @@ public class YouTrackServer {
         user.setUsername(user.getUsername());
         try {
 
-            URL url = new URL(serverUrl + "/rest/issue");
+            String params = "project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8");
+
+            URL url = new URL(serverUrl + "/rest/issue?" + params);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setDoOutput(true);
-            urlConnection.setDoInput(true);
-            urlConnection.setRequestMethod("PUT");
             urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             for (String cookie : user.getCookies()) {
                 urlConnection.setRequestProperty("Cookie", cookie);
             }
-
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.write("project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8"));
-
-            outputStreamWriter.flush();
-            outputStreamWriter.close();
-
+            urlConnection.setRequestMethod("PUT");
 
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_CREATED) {

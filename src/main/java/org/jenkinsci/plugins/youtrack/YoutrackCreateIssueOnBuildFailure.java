@@ -96,6 +96,11 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
     }
 
     @Override
+    public boolean needsToRunAfterFinalized() {
+        return true;
+    }
+
+    @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
         if (youTrackSite == null) {
