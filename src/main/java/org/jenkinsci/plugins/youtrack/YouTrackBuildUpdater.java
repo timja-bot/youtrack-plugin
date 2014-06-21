@@ -26,16 +26,27 @@ import java.util.List;
  */
 public class YouTrackBuildUpdater extends Recorder {
 
+    /**
+     * This was the name, where there was an implicit ${BUILD_NUMBER} (name) format.
+     * @deprecated {@link #buildName} should be used instead.
+     */
     private String name;
+    /**
+     * Name of build to create and use for setting Fixed in build.
+     */
+    private String buildName;
     private String bundleName;
     private boolean markFixedIfUnstable;
     private boolean onlyAddIfHasFixedIssues;
     private boolean runSilently;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
+    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
         this.name = name;
         this.bundleName = bundleName;
+
+
+        this.buildName = buildName;
         this.markFixedIfUnstable = markFixedIfUnstable;
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
         this.runSilently = runSilently;
@@ -43,12 +54,25 @@ public class YouTrackBuildUpdater extends Recorder {
 
 
 
+    @Deprecated
     public String getName() {
         return name;
     }
 
+    @Deprecated
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBuildName() {
+        if (name != null && buildName == null) {
+            this.buildName = "${BUILD_NUMBER} ("+name+")";
+        }
+        return buildName;
+    }
+
+    public void setBuildName(String buildName) {
+        this.buildName = buildName;
     }
 
     public String getBundleName() {
@@ -122,11 +146,11 @@ public class YouTrackBuildUpdater extends Recorder {
         }
         EnvVars environment = build.getEnvironment(listener);
         String buildName;
-        if(getName() == null || getName().equals("")) {
+        if(getBuildName() == null || getBuildName().equals("")) {
             buildName = String.valueOf(build.getNumber());
         } else {
 
-            buildName = String.valueOf(build.getNumber()) + " (" + environment.expand(name) + ")";
+            buildName = environment.expand(getBuildName());
 
         }
         String inputBundleName =environment.expand(getBundleName());
