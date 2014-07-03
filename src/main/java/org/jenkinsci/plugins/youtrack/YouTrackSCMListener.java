@@ -33,7 +33,6 @@ public class YouTrackSCMListener extends SCMListener {
             }
             performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
         }
-        super.onChangeLogParsed(build, listener, changeLogSet);
     }
 
     protected void performActions(AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, Iterator<? extends ChangeLogSet.Entry> changeLogIterator, YouTrackServer youTrackServer, User user) throws IllegalAccessException, InvocationTargetException {
