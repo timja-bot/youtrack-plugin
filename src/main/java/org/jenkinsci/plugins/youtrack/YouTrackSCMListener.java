@@ -33,7 +33,6 @@ public class YouTrackSCMListener extends SCMListener {
             }
             performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
         }
-        super.onChangeLogParsed(build, listener, changeLogSet);
     }
 
     YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
