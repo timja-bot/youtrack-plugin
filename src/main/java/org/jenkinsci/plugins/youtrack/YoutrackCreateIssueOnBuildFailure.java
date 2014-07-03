@@ -102,14 +102,14 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+        YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite == null) {
             listener.getLogger().println("No YouTrack site configured");
             return true;
         }
 
         if (shouldCreateIssue(build)) {
-            YouTrackServer server = new YouTrackServer(youTrackSite.getUrl());
+            YouTrackServer server = getYouTrackServer(youTrackSite);
             User user = server.login(youTrackSite.getUsername(), youTrackSite.getPassword());
             if (user == null) {
                 listener.getLogger().println("Could not login user to YouTrack");
@@ -125,7 +125,7 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
                 title = "Build failure in build " + build.getNumber();
             }
             if (description == null || "".equals(description)) {
-                description = build.getAbsoluteUrl();
+                description = getAbsoluteUrl(build);
             }
 
             Command issue = server.createIssue(youTrackSite.getName(), user, project, title, description, command);
@@ -136,6 +136,17 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
 
     }
 
+    public String getAbsoluteUrl(AbstractBuild<?, ?> build) {
+        return build.getAbsoluteUrl();
+    }
+
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
+    }
 
 
     private boolean shouldCreateIssue(AbstractBuild<?, ?> build) {

@@ -114,8 +114,9 @@ public class YouTrackBuildUpdater extends Recorder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
-        YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+        YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
+            listener.getLogger().println("No YouTrack site configured");
             return true;
         }
 
@@ -130,15 +131,13 @@ public class YouTrackBuildUpdater extends Recorder {
 
         //Return early if there is no build to be added
         if(onlyAddIfHasFixedIssues) {
-            if(action == null) {
-                return true;
-            }
-            if(action.getIssueIds().isEmpty()) {
+            if(action == null || action.getIssueIds().isEmpty()) {
+                listener.getLogger().println("No build to add");
                 return true;
             }
         }
 
-        YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+        YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
         User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
         if(user == null || !user.isLoggedIn()) {
             listener.getLogger().println("FAILED: to log in to youtrack");
@@ -189,6 +188,14 @@ public class YouTrackBuildUpdater extends Recorder {
         }
 
         return true;
+    }
+
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
     }
 
     @Extension

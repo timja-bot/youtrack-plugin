@@ -21,7 +21,7 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
     @Override
     public void annotate(AbstractBuild<?, ?> abstractBuild, ChangeLogSet.Entry entry, MarkupText markupText) {
         AbstractProject<?, ?> project = abstractBuild.getProject();
-        YouTrackSite youTrackSite = YouTrackSite.get(project);
+        YouTrackSite youTrackSite = getSiteForProject(project);
         AbstractBuild<?, ?> lastSuccessfulBuild = abstractBuild.getProject().getLastSuccessfulBuild();
         if (lastSuccessfulBuild != null) {
             YouTrackSaveProjectShortNamesAction action = lastSuccessfulBuild.getAction(YouTrackSaveProjectShortNamesAction.class);
@@ -42,7 +42,7 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
                                 String commitId = "_" + entry.getMsg().hashCode() + "_"  + i++ + "_" + random.nextInt();
 
 
-                                String issueUrl = Hudson.getInstance().getRootUrl() + project.getLastSuccessfulBuild().getUrl() + "youtrack/issue?id=" + issueId;
+                                String issueUrl = getRootUrl() + project.getLastSuccessfulBuild().getUrl() + "youtrack/issue?id=" + issueId;
 
 
                                 String s = "<script>\n";
@@ -56,6 +56,18 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
                 }
             }
         }
+    }
+
+    String getRootUrl() {
+        return Hudson.getInstance().getRootUrl();
+    }
+
+    YouTrackSite getSiteForProject(AbstractProject<?, ?> project) {
+        return getYouTrackSite(project);
+    }
+
+    private YouTrackSite getYouTrackSite(AbstractProject<?, ?> project) {
+        return YouTrackSite.get(project);
     }
 
 

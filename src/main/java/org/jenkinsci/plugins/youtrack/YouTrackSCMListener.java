@@ -19,14 +19,14 @@ public class YouTrackSCMListener extends SCMListener {
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
         if (build.getRootBuild().equals(build)) {
-            YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+            YouTrackSite youTrackSite = getYouTrackSite(build);
             if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
                 return;
             }
 
             Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changeLogSet.iterator();
 
-            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
             User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
             if (user == null || !user.isLoggedIn()) {
                 listener.getLogger().append("FAILED: log in with set YouTrack user");
@@ -34,6 +34,14 @@ public class YouTrackSCMListener extends SCMListener {
             performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
         }
         super.onChangeLogParsed(build, listener, changeLogSet);
+    }
+
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
     }
 
     protected void performActions(AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, Iterator<? extends ChangeLogSet.Entry> changeLogIterator, YouTrackServer youTrackServer, User user) throws IllegalAccessException, InvocationTargetException {

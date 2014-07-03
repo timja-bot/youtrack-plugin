@@ -17,9 +17,7 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import static junit.framework.Assert.*;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -55,7 +53,6 @@ public class YouTrackSCMListenerTest {
 
 
     @Test
-    @Ignore
     public void testExecuteCommand() throws Exception {
         FreeStyleProject project = mock(FreeStyleProject.class);
         FreeStyleBuild freeStyleBuild = mock(FreeStyleBuild.class);
@@ -100,20 +97,21 @@ public class YouTrackSCMListenerTest {
 
         youTrackSite.setPluginEnabled(true);
 
-        YouTrackProjectProperty youTrackProjectProperty = new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null);
-        YouTrackProjectProperty.DescriptorImpl descriptor = (YouTrackProjectProperty.DescriptorImpl) youTrackProjectProperty.getDescriptor();
-        descriptor.setSites(youTrackSite);
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
+        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
 
-        when(project.getProperty(YouTrackProjectProperty.class)).thenReturn(youTrackProjectProperty);
-
-
-        YouTrackSCMListener youTrackSCMListener = new YouTrackSCMListener();
         youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
 
         YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
         List<Command> commands = youTrackCommandAction.getCommands();
         assertEquals(1, commands.size());
+    }
+
+    YouTrackProjectProperty getProjectProperty() {
+        return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null);
     }
 
 
