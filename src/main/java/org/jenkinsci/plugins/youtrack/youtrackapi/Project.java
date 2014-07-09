@@ -32,6 +32,17 @@ public class Project {
         this.shortName = shortName;
     }
 
+    public Project() {
+    }
+
+    /**
+     * Constructor for a project.
+     * @param shortName the short name of the project in YouTrack.
+     */
+    public Project(String shortName) {
+        this.shortName = shortName;
+    }
+
     /**
      * Handler for the project list.
      */

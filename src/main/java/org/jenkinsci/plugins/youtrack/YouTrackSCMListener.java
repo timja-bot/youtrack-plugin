@@ -72,6 +72,8 @@ public class YouTrackSCMListener extends SCMListener {
         YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
 
         List<Issue> fixedIssues = new ArrayList<Issue>();
+        //This is the set of issue ids for which the related build command has already been added
+        Set<String> commentedIssueIds = new HashSet<String>();
 
         while (changeLogIterator.hasNext()) {
             ChangeLogSet.Entry next = changeLogIterator.next();
@@ -92,7 +94,7 @@ public class YouTrackSCMListener extends SCMListener {
                 msg = next.getMsg();
             }
 
-            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener, commentedIssueIds);
             for (Command command : commands) {
                 commandAction.addCommand(command);
             }
@@ -286,7 +288,7 @@ public class YouTrackSCMListener extends SCMListener {
         }
     }
 
-    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener) {
+    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener, Set<String> commentedIssueIds) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
@@ -296,20 +298,31 @@ public class YouTrackSCMListener extends SCMListener {
                 while (matcher.find()) {
                     if (matcher.groupCount() >= 1) {
                         String issueId = shortName + "-" + matcher.group(2);
-                        //noinspection deprecation
-                        String commentText = "Related build: " + build.getAbsoluteUrl();
-                        Command comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
-                        commands.add(comment);
-                        if (comment.getStatus() == Command.Status.OK) {
-                            listener.getLogger().println("Commented on " + issueId);
-                        } else {
-                            listener.getLogger().println("FAILED: Commented on " + issueId);
+                        String commentText = "Related build: " + getAbsoluteUrlForBuild(build);
+                        Command comment = null;
+                        if (!commentedIssueIds.contains(issueId)) {
+                            comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
+                        }
+                        if (comment != null) {
+                            commands.add(comment);
+                            if (comment.getStatus() == Command.Status.OK) {
+                                if (!commentedIssueIds.contains(issueId)) {
+                                    commentedIssueIds.add(issueId);
+                                    listener.getLogger().println("Commented on " + issueId);
+                                }
+                            } else {
+                                listener.getLogger().println("FAILED: Commented on " + issueId);
+                            }
                         }
                     }
                 }
             }
         }
         return commands;
+    }
+
+    protected String getAbsoluteUrlForBuild(AbstractBuild build) {
+        return build.getAbsoluteUrl();
     }
 
     @Override
