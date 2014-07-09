@@ -1,30 +1,13 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * This object represents a state in youtrack.
  */
 public class State {
-    private String value;
-    private String description;
-    private boolean resolved;
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setResolved(boolean resolved) {
-        this.resolved = resolved;
-    }
+    @Getter @Setter private String value;
+    @Getter @Setter private String description;
+    @Getter @Setter private boolean resolved;
 }

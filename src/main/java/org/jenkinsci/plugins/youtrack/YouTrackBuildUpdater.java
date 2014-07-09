@@ -8,6 +8,8 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import lombok.Getter;
+import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
@@ -34,25 +36,22 @@ public class YouTrackBuildUpdater extends Recorder {
     /**
      * Name of build to create and use for setting Fixed in build.
      */
-    private String buildName;
-    private String bundleName;
-    private boolean markFixedIfUnstable;
-    private boolean onlyAddIfHasFixedIssues;
-    private boolean runSilently;
+    @Setter private String buildName;
+    @Getter @Setter private String bundleName;
+    @Getter @Setter private boolean markFixedIfUnstable;
+    @Getter @Setter private boolean onlyAddIfHasFixedIssues;
+    @Getter @Setter private boolean runSilently;
 
     @DataBoundConstructor
     public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
         this.name = name;
         this.bundleName = bundleName;
 
-
         this.buildName = buildName;
         this.markFixedIfUnstable = markFixedIfUnstable;
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
         this.runSilently = runSilently;
     }
-
-
 
     @Deprecated
     public String getName() {
@@ -71,44 +70,8 @@ public class YouTrackBuildUpdater extends Recorder {
         return buildName;
     }
 
-    public void setBuildName(String buildName) {
-        this.buildName = buildName;
-    }
-
-    public String getBundleName() {
-        return bundleName;
-    }
-
-    public void setBundleName(String bundleName) {
-        this.bundleName = bundleName;
-    }
-
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
-    }
-
-    public boolean isMarkFixedIfUnstable() {
-        return markFixedIfUnstable;
-    }
-
-    public void setMarkFixedIfUnstable(boolean markFixedIfUnstable) {
-        this.markFixedIfUnstable = markFixedIfUnstable;
-    }
-
-    public boolean isOnlyAddIfHasFixedIssues() {
-        return onlyAddIfHasFixedIssues;
-    }
-
-    public void setOnlyAddIfHasFixedIssues(boolean onlyAddIfHasFixedIssues) {
-        this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
-    }
-
-    public boolean isRunSilently() {
-        return runSilently;
-    }
-
-    public void setRunSilently(boolean runSilently) {
-        this.runSilently = runSilently;
     }
 
     @Override
@@ -206,8 +169,6 @@ public class YouTrackBuildUpdater extends Recorder {
             return true;
         }
 
-
-
         @Override
         public String getDisplayName() {
             return "YouTrack Build Updater";
@@ -236,7 +197,5 @@ public class YouTrackBuildUpdater extends Recorder {
             }
             return autoCompletionCandidates;
         }
-
-
     }
 }

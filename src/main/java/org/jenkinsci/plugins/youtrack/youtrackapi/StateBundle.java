@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -10,38 +14,21 @@ import java.util.List;
 /**
  * This class represents a state bundle.
  */
+@RequiredArgsConstructor
 public class StateBundle {
     /**
      * Name of the bundle.
      */
-    private String name;
+    @Getter private final String name;
     /**
      * Url of the bundle.
      */
-    private String url;
+    @Getter private final String url;
 
     /**
      * The states for this state bundle.
      */
-    private List<State> states;
-
-    public StateBundle(String name, String url) {
-        this.name = name;
-        this.url = url;
-        this.states = new ArrayList<State>();
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public List<State> getStates() {
-        return states;
-    }
+    @Getter private final List<State> states = new ArrayList<State>();
 
     public static class StateBundleHandler extends DefaultHandler {
         private StateBundle stateBundle;
