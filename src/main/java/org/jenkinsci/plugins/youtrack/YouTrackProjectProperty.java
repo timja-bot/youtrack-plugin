@@ -4,6 +4,8 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
+import lombok.Getter;
+import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
