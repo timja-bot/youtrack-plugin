@@ -28,7 +28,6 @@ public class YoutrackProcessedRevisionsSaver {
         if (!file.exists()) {
             try {
                 boolean newFile = file.createNewFile();
-                file.createNewFile();
                 if (!newFile) {
                     LOGGER.error("Could not create youtrack processed file");
                 }
@@ -37,6 +36,7 @@ public class YoutrackProcessedRevisionsSaver {
             }
         } else {
             try {
+
                 FileInputStream fileInputStream = new FileInputStream(file);
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
                 String l;
