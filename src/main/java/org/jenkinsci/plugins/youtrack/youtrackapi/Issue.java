@@ -1,5 +1,8 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -11,23 +14,23 @@ public class Issue {
     /**
      * The id of the issue.
      */
-    private String id;
+    @Getter @Setter private String id;
     /**
      * The state of the issue.
      */
-    private String state;
+    @Getter @Setter private String state;
 
     /**
      * Title of issue.
      */
-    private String summary;
+    @Getter @Setter private String summary;
 
-    private String resolved;
+    @Getter @Setter private String resolved;
 
     /**
      * Summary of issue.
      */
-    private String description;
+    @Getter @Setter private String description;
 
     /**
      * Constructs an issue object with the given id.
@@ -36,54 +39,6 @@ public class Issue {
      */
     public Issue(String id) {
         this.id = id;
-    }
-
-    /**
-     * @return the id of the issue.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Gets the state of the issue.
-     *
-     * @return the state of the issue.
-     */
-    public String getState() {
-        return state;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getResolved() {
-        return resolved;
-    }
-
-    public void setResolved(String resolved) {
-        this.resolved = resolved;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override
@@ -118,7 +73,7 @@ public class Issue {
         /**
          * Holder for the result.
          */
-        private Issue issue;
+        @Getter private Issue issue;
 
         /**
          * State field name.
@@ -131,15 +86,6 @@ public class Issue {
             if(stateFieldName == null || stateFieldName.equals("")) {
                 this.stateFieldName = "State";
             }
-        }
-
-        /**
-         * The resulting issue object.
-         *
-         * @return the issue.
-         */
-        public Issue getIssue() {
-            return issue;
         }
 
         @Override
