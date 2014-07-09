@@ -3,6 +3,7 @@
 *.ipr
 *.iws
 .idea/
+work
 
 # Maven
 target/

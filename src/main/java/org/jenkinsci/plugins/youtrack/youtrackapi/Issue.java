@@ -18,6 +18,18 @@ public class Issue {
     private String state;
 
     /**
+     * Title of issue.
+     */
+    private String summary;
+
+    private String resolved;
+
+    /**
+     * Summary of issue.
+     */
+    private String description;
+
+    /**
      * Constructs an issue object with the given id.
      *
      * @param id id of issue.
@@ -40,6 +52,55 @@ public class Issue {
      */
     public String getState() {
         return state;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getResolved() {
+        return resolved;
+    }
+
+    public void setResolved(String resolved) {
+        this.resolved = resolved;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Issue issue = (Issue) o;
+
+        if (id != null ? !id.equals(issue.id) : issue.id != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 
     /**
@@ -110,6 +171,12 @@ public class Issue {
             if (qName.equals("value")) {
                 if (currentField.equals(stateFieldName)) {
                     issue.state = stringBuilder.toString();
+                } else if (currentField.equals("summary")) {
+                    issue.summary = stringBuilder.toString();
+                } else if (currentField.equals("description")) {
+                    issue.description = stringBuilder.toString();
+                } else if (currentField.equals("resolved")) {
+                    issue.resolved = stringBuilder.toString();
                 }
             }
         }

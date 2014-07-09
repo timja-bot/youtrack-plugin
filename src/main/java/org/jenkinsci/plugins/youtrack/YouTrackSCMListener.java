@@ -5,11 +5,11 @@ import hudson.model.BuildListener;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
-import org.jenkinsci.plugins.youtrack.youtrackapi.User;
-import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,68 +19,146 @@ public class YouTrackSCMListener extends SCMListener {
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
         if (build.getRootBuild().equals(build)) {
-            YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+            YouTrackSite youTrackSite = getYouTrackSite(build);
             if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
                 return;
             }
 
             Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changeLogSet.iterator();
 
-            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
             User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
             if (user == null || !user.isLoggedIn()) {
                 listener.getLogger().append("FAILED: log in with set YouTrack user");
             }
-            build.addAction(new YouTrackIssueAction(build.getProject()));
+            performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
+        }
+    }
 
-            List<Project> projects = youTrackServer.getProjects(user);
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
+    }
+
+    protected void performActions(AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, Iterator<? extends ChangeLogSet.Entry> changeLogIterator, YouTrackServer youTrackServer, User user) throws IllegalAccessException, InvocationTargetException {
+        build.addAction(new YouTrackIssueAction(build.getProject()));
+
+        List<Project> projects = youTrackServer.getProjects(user);
+
+
+        if (projects != null) {
+            build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
+        } else {
+            AbstractBuild<?, ?> lastSuccessfulBuild = build.getProject().getLastStableBuild();
+            YouTrackSaveProjectShortNamesAction action = lastSuccessfulBuild.getAction(YouTrackSaveProjectShortNamesAction.class);
+            if (action != null) {
+                List<String> shortNames = action.getShortNames();
+                List<Project> previousProjects = new ArrayList<Project>();
+                for (String shortName : shortNames) {
+                    Project prevProject = new Project();
+                    prevProject.setShortName(shortName);
+                    previousProjects.add(prevProject);
+                    projects = previousProjects;
+                }
+            } else {
+                projects = new ArrayList<Project>();
+            }
+        }
+
+
+        YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
+
+        List<Issue> fixedIssues = new ArrayList<Issue>();
+
+        while (changeLogIterator.hasNext()) {
+            ChangeLogSet.Entry next = changeLogIterator.next();
+
+            String msg;
+            if (next.getClass().getCanonicalName().equals("hudson.plugins.git.GitChangeSet")) {
+
+                try {
+                    Method getComment = next.getClass().getMethod("getComment");
+                    Object message = getComment.invoke(next);
+                    msg = (String) message;
+                } catch (NoSuchMethodException e) {
+                    msg = next.getMsg();
+                } catch (SecurityException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                msg = next.getMsg();
+            }
+
+            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+            for (Command command : commands) {
+                commandAction.addCommand(command);
+            }
 
 
             if (projects != null) {
-                build.addAction(new YouTrackSaveProjectShortNamesAction(projects));
-            } else {
-                AbstractBuild<?, ?> lastSuccessfulBuild = build.getProject().getLastStableBuild();
-                YouTrackSaveProjectShortNamesAction action = lastSuccessfulBuild.getAction(YouTrackSaveProjectShortNamesAction.class);
-                if (action != null) {
-                    List<String> shortNames = action.getShortNames();
-                    List<Project> previousProjects = new ArrayList<Project>();
-                    for (String shortName : shortNames) {
-                        Project prevProject = new Project();
-                        prevProject.setShortName(shortName);
-                        previousProjects.add(prevProject);
-                        projects = previousProjects;
+                List<Project> youtrackProjects = new ArrayList<Project>(projects.size());
+                Set<String> includedProjects = getIncludedProjects(projects, youTrackSite);
+
+                for (Project project : projects) {
+                    if (includedProjects.contains(project.getShortName())) {
+                        youtrackProjects.add(project);
                     }
-                } else {
-                    projects = new ArrayList<Project>();
+                }
+
+                Jenkins instance = Jenkins.getInstance();
+                YouTrackPlugin plugin = null;
+                if (instance != null) {
+                    plugin = instance.getPlugin(YouTrackPlugin.class);
+                }
+                YoutrackProcessedRevisionsSaver revisionsSaver = null;
+                if (plugin != null) {
+                    revisionsSaver = plugin.getRevisionsSaver();
+                }
+                if ((youTrackSite.isTrackCommits() && (revisionsSaver != null && !revisionsSaver.isProcessed(next.getCommitId()))) || !youTrackSite.isTrackCommits()) {
+                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
+                    for (Command command : commandList) {
+                        commandAction.addCommand(command);
+                    }
+                    if (youTrackSite.isTrackCommits() && !commandList.isEmpty()) {
+                        if (revisionsSaver != null) {
+                            revisionsSaver.addProcessed(next.getCommitId());
+                        }
+                    }
                 }
             }
-
-
-            YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
-            build.addAction(commandAction);
-
-            List<Issue> fixedIssues = new ArrayList<Issue>();
-
-            while (changeLogIterator.hasNext()) {
-                ChangeLogSet.Entry next = changeLogIterator.next();
-                String msg = next.getMsg();
-
-                List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
-                for (Command command : commands) {
-                    commandAction.addCommand(command);
-                }
-
-
-                List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, projects, fixedIssues, next, msg);
-                for (Command command : commandList) {
-                    commandAction.addCommand(command);
-                }
-            }
-
-            build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
 
         }
-        super.onChangeLogParsed(build, listener, changeLogSet);
+
+        int numCommands = commandAction.getNumCommands();
+
+        if (numCommands > 0) {
+            build.addAction(commandAction);
+        }
+
+        build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
+    }
+
+    private Set<String> getIncludedProjects(List<Project> projects, YouTrackSite youTrackSite) {
+        String executeProjectLimits = youTrackSite.getExecuteProjectLimits();
+        if (executeProjectLimits == null || executeProjectLimits.trim().equals("")) {
+            HashSet<String> projectIds = new HashSet<String>();
+            for (Project project : projects) {
+                projectIds.add(project.getShortName());
+            }
+            return projectIds;
+        } else {
+            HashSet<String> nameSet = new HashSet<String>();
+            String[] names = executeProjectLimits.split(",");
+            for (String name : names) {
+                if (!name.trim().equals("")) {
+                    nameSet.add(name);
+                }
+            }
+            return nameSet;
+        }
     }
 
     /**

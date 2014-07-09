@@ -26,16 +26,27 @@ import java.util.List;
  */
 public class YouTrackBuildUpdater extends Recorder {
 
+    /**
+     * This was the name, where there was an implicit ${BUILD_NUMBER} (name) format.
+     * @deprecated {@link #buildName} should be used instead.
+     */
     private String name;
+    /**
+     * Name of build to create and use for setting Fixed in build.
+     */
+    private String buildName;
     private String bundleName;
     private boolean markFixedIfUnstable;
     private boolean onlyAddIfHasFixedIssues;
     private boolean runSilently;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
+    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
         this.name = name;
         this.bundleName = bundleName;
+
+
+        this.buildName = buildName;
         this.markFixedIfUnstable = markFixedIfUnstable;
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
         this.runSilently = runSilently;
@@ -43,12 +54,25 @@ public class YouTrackBuildUpdater extends Recorder {
 
 
 
+    @Deprecated
     public String getName() {
         return name;
     }
 
+    @Deprecated
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBuildName() {
+        if (name != null && buildName == null) {
+            this.buildName = "${BUILD_NUMBER} ("+name+")";
+        }
+        return buildName;
+    }
+
+    public void setBuildName(String buildName) {
+        this.buildName = buildName;
     }
 
     public String getBundleName() {
@@ -90,8 +114,9 @@ public class YouTrackBuildUpdater extends Recorder {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
-        YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+        YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
+            listener.getLogger().println("No YouTrack site configured");
             return true;
         }
 
@@ -106,15 +131,13 @@ public class YouTrackBuildUpdater extends Recorder {
 
         //Return early if there is no build to be added
         if(onlyAddIfHasFixedIssues) {
-            if(action == null) {
-                return true;
-            }
-            if(action.getIssueIds().isEmpty()) {
+            if(action == null || action.getIssueIds().isEmpty()) {
+                listener.getLogger().println("No build to add");
                 return true;
             }
         }
 
-        YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+        YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
         User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
         if(user == null || !user.isLoggedIn()) {
             listener.getLogger().println("FAILED: to log in to youtrack");
@@ -122,11 +145,11 @@ public class YouTrackBuildUpdater extends Recorder {
         }
         EnvVars environment = build.getEnvironment(listener);
         String buildName;
-        if(getName() == null || getName().equals("")) {
+        if(getBuildName() == null || getBuildName().equals("")) {
             buildName = String.valueOf(build.getNumber());
         } else {
 
-            buildName = String.valueOf(build.getNumber()) + " (" + environment.expand(name) + ")";
+            buildName = environment.expand(getBuildName());
 
         }
         String inputBundleName =environment.expand(getBundleName());
@@ -165,6 +188,14 @@ public class YouTrackBuildUpdater extends Recorder {
         }
 
         return true;
+    }
+
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
     }
 
     @Extension

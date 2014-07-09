@@ -1,0 +1,26 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <h3>YouTrack Integration</h3>
+    <j:choose>
+        <j:when test="${it.linked}">
+            <a href="${it.youtrackServerUrl}/issue/${it.youtrackIssueId}" target="_blank">Go to issue</a>
+            <br/>
+            <a href="youtrack/unlinkIssue">Remove issue link</a>
+        </j:when>
+        <j:otherwise>
+            <script>
+                function linkIssue() {
+                    document.getElementById("youtrackLinkForm").submit();
+                }
+            </script>
+            <form action="youtrack/linkIssue" id="youtrackLinkForm">
+                <a href="youtrack/createIssue">Create issue</a>
+                <br/>
+                <br />
+                <input type="text" name="youtrackIssueId" placeholder="Youtrack Issue Id" /><br />
+                <a href="#" onclick="linkIssue();">Link with Youtrack Issue Id</a>
+            </form>
+        </j:otherwise>
+    </j:choose>
+</j:jelly>

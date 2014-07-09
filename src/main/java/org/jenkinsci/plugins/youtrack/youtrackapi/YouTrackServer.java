@@ -43,6 +43,78 @@ public class YouTrackServer {
         this.serverUrl = serverUrl;
     }
 
+    public Command createIssue(String siteName, User user, String project, String title, String description, String command) {
+        Command cmd = new Command();
+        cmd.setCommand("[Create issue]");
+        cmd.setDate(new Date());
+        cmd.setSiteName(siteName);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return null;
+        } else {
+            cmd.setStatus(Command.Status.FAILED);
+        }
+        user.setUsername(user.getUsername());
+        try {
+
+            String params = "project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8");
+
+            URL url = new URL(serverUrl + "/rest/issue?" + params);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+            urlConnection.setRequestMethod("PUT");
+
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_CREATED) {
+                System.out.println("Created issue");
+                String location = urlConnection.getHeaderField("Location");
+                String issueId = location.substring(location.lastIndexOf("/") + 1);
+
+
+                Issue issue = new Issue(issueId);
+                if (command != null && !command.equals("")) {
+                    applyCommand(siteName, user, issue, command, "", null, false);
+                }
+                cmd.setIssueId(issueId);
+                cmd.setStatus(Command.Status.OK);
+                return cmd;
+            } else {
+                cmd.setStatus(Command.Status.FAILED);
+
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
+                String l;
+                StringBuilder stringBuilder = new StringBuilder();
+                while ((l = bufferedReader.readLine()) != null) {
+                    stringBuilder.append(l).append("\n");
+                }
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    ErrorHandler errorHandler = new ErrorHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+                    cmd.setResponse(errorHandler.errorMessage);
+                } catch (ParserConfigurationException e) {
+                    cmd.setResponse(e.getMessage());
+                } catch (SAXException e) {
+                    cmd.setResponse(e.getMessage());
+                }
+                System.out.println("Did not create issue: " + cmd.getResponse());
+            }
+
+        } catch (MalformedURLException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+        } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+        }
+        return cmd;
+    }
+
     public List<Group> getGroups(User user) {
         List<Group> groups = new ArrayList<Group>();
         try {
@@ -270,7 +342,7 @@ public class YouTrackServer {
             }
 
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.write("comment=" + comment);
+            outputStreamWriter.write("comment=" + URLEncoder.encode(comment, "UTF-8"));
             if (group != null && !group.equals("")) {
                 outputStreamWriter.write("&group=" + group);
             }
@@ -331,6 +403,7 @@ public class YouTrackServer {
         cmd.setSiteName(siteName);
         cmd.setDate(new Date());
         cmd.setStatus(Command.Status.FAILED);
+        cmd.setComment(comment);
 
         if (user == null || !user.isLoggedIn()) {
             cmd.setStatus(Command.Status.NOT_LOGGED_IN);
@@ -568,7 +641,7 @@ public class YouTrackServer {
      */
     public Issue getIssue(User user, String issueId, String stateField) {
         try {
-            URL url = new URL(serverUrl + "/rest/issue/" + issueId);
+            URL url = new URL(serverUrl + "/rest/issue/" + issueId + "?wikifyDescription=true");
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             for (String cookie : user.getCookies()) {
                 urlConnection.setRequestProperty("Cookie", cookie);
