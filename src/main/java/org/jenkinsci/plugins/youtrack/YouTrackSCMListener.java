@@ -57,7 +57,7 @@ public class YouTrackSCMListener extends SCMListener {
                 continue;
             }
 
-            prefixCommands.put(prefix, youTrackSite.getPrefixCommand());
+            prefixCommands.put(prefix.trim().toLowerCase(), youTrackSite.getPrefixCommand());
         }
 
         return prefixCommands;
@@ -246,7 +246,7 @@ public class YouTrackSCMListener extends SCMListener {
                         }
 
                         if (prefixCommands != null && prefixLength != 0) {
-                            String prefix = line.substring(0, prefixLength).trim();
+                            String prefix = line.substring(0, prefixLength).trim().toLowerCase();
                             for (String prefixKey : prefixCommands.keySet()) {
                                 if (prefix.endsWith(prefixKey)) {
                                     extraPrefixCommand = prefixCommands.get(prefixKey);
