@@ -139,7 +139,7 @@ public class YouTrackSCMListener extends SCMListener {
                 msg = next.getMsg();
             }
 
-            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener);
+            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, next.getCommitId(), listener);
             for (Command command : commands) {
                 commandAction.addCommand(command);
             }
@@ -359,7 +359,7 @@ public class YouTrackSCMListener extends SCMListener {
         }
     }
 
-    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener) {
+    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, String commitId, BuildListener listener) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
@@ -370,7 +370,7 @@ public class YouTrackSCMListener extends SCMListener {
                     if (matcher.groupCount() >= 1) {
                         String issueId = shortName + "-" + matcher.group(2);
                         //noinspection deprecation
-                        String commentText = "Related build: " + build.getAbsoluteUrl();
+                        String commentText = "Related build: " + build.getAbsoluteUrl() + "\nSHA: " + commitId;
                         Command comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
                         commands.add(comment);
                         if (comment.getStatus() == Command.Status.OK) {
