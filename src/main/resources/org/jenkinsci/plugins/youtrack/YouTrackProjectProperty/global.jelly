@@ -2,6 +2,7 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:section title="${%header}">
         <f:entry title="YouTrack sites" description="${%description}">
+            <a name="youtrack" />
             <f:repeatable name="youtracksites" var="site" items="${descriptor.sites}">
                 <table width="100%">
                     <f:entry title="${%name}" field="name">

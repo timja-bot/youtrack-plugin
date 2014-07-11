@@ -15,8 +15,13 @@ import org.jvnet.hudson.test.FakeChangeLogSCM;
 import org.mockito.Answers;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
 
 import static junit.framework.Assert.*;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
@@ -109,6 +114,101 @@ public class YouTrackSCMListenerTest {
         List<Command> commands = youTrackCommandAction.getCommands();
         assertEquals(1, commands.size());
     }
+
+
+    @Test
+    public void testSingleLinkPerBuild() throws Exception {
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        FreeStyleBuild build = mock(FreeStyleBuild.class);
+        BuildListener listener = mock(BuildListener.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        doReturn(Lists.newArrayList(new Project("TP1"))).when(server).getProjects(user);
+        doReturn(Lists.newArrayList(new MockEntry("#TP1-1 In Progress"), new MockEntry("#TP1-1 Fixed")).iterator()).when(changeLogSet).iterator();
+        doReturn(build).when(build).getRootBuild();
+        doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
+        doReturn("http://test.com/buildurl").when(youTrackSCMListener).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+
+
+        final List<Command> commentCommands = new ArrayList<Command>();
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Command command = new Command();
+                command.setStatus(Command.Status.OK);
+                command.setSiteName((String) invocationOnMock.getArguments()[0]);
+                command.setUsername(((User) invocationOnMock.getArguments()[1]).getUsername());
+                command.setIssueId(((Issue) invocationOnMock.getArguments()[2]).getId());
+                command.setComment(((String) invocationOnMock.getArguments()[3]));
+                command.setGroup(((String) invocationOnMock.getArguments()[4]));
+                command.setSilent(((Boolean) invocationOnMock.getArguments()[5]));
+                commentCommands.add(command);
+
+                return command;
+            }
+        }).when(server).comment(anyString(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
+
+
+
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommentEnabled(true);
+
+
+        youTrackSCMListener.performActions(build, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        assertThat(commentCommands.size(), is(1));
+    }
+
+    @Test
+    public void testLinkForAllIssue() throws Exception {
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        FreeStyleBuild build = mock(FreeStyleBuild.class);
+        BuildListener listener = mock(BuildListener.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        doReturn(Lists.newArrayList(new Project("TP1"), new Project("TP2"))).when(server).getProjects(user);
+        doReturn(Lists.newArrayList(new MockEntry("#TP1-1 In Progress"), new MockEntry("#TP1-2 Fixed")).iterator()).when(changeLogSet).iterator();
+        doReturn(build).when(build).getRootBuild();
+        doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
+        doReturn("http://test.com/buildurl").when(youTrackSCMListener).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+
+
+        final List<Command> commentCommands = new ArrayList<Command>();
+        doAnswer(new Answer() {
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Command command = new Command();
+                command.setStatus(Command.Status.OK);
+                command.setSiteName((String) invocationOnMock.getArguments()[0]);
+                command.setUsername(((User) invocationOnMock.getArguments()[1]).getUsername());
+                command.setIssueId(((Issue) invocationOnMock.getArguments()[2]).getId());
+                command.setComment(((String) invocationOnMock.getArguments()[3]));
+                command.setGroup(((String) invocationOnMock.getArguments()[4]));
+                command.setSilent(((Boolean) invocationOnMock.getArguments()[5]));
+                commentCommands.add(command);
+
+                return command;
+            }
+        }).when(server).comment(anyString(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommentEnabled(true);
+
+
+        youTrackSCMListener.performActions(build, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        assertThat(commentCommands.size(), is(2));
+    }
+
 
     @Test
     public void testMultilineComment() throws Exception {
@@ -252,6 +352,4 @@ public class YouTrackSCMListenerTest {
     YouTrackProjectProperty getProjectProperty() {
         return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null, "Fixes,Fixed", "Fix");
     }
-
-
 }

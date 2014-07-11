@@ -10,103 +10,108 @@
 
         <f:optionalBlock name="youtrack.pluginEnabled" title="${%integrate}"
                          checked="${instance.pluginEnabled}">
-            <j:if test="${descriptor.sites.size() &gt; 0}">
-                <f:entry title="${%site}" field="site">
-                    <select class="setting-input" name="youtrack.siteName">
-                        <j:forEach var="s" items="${descriptor.sites}">
-                            <f:option selected="${s.name==instance.siteName}">${s.name}</f:option>
-                        </j:forEach>
-                    </select>
-                </f:entry>
+            <j:choose>
+                <j:when test="${descriptor.sites.size() &gt; 0}">
+                    <f:entry title="${%site}" field="site">
+                        <select class="setting-input" name="youtrack.siteName">
+                            <j:forEach var="s" items="${descriptor.sites}">
+                                <f:option selected="${s.name==instance.siteName}">${s.name}</f:option>
+                            </j:forEach>
+                        </select>
+                    </f:entry>
 
-                <f:entry field="annotationsEnabled">
-                    <label>
-                        <f:checkbox name="youtrack.annotationsEnabled"/>
-                        ${%annotateChangeLog}
-                    </label>
+                    <f:entry field="annotationsEnabled">
+                        <label>
+                            <f:checkbox name="youtrack.annotationsEnabled"/>
+                            ${%annotateChangeLog}
+                        </label>
 
-                </f:entry>
+                    </f:entry>
 
-                <f:block>
-                    <strong>${%backlinks}</strong>
-                </f:block>
+                    <f:block>
+                        <strong>${%backlinks}</strong>
+                    </f:block>
 
-                <f:entry title="${%backlinks.enabled}" field="commentsEnabled">
-                    <f:checkbox name="youtrack.commentsEnabled" />
-                </f:entry>
+                    <f:entry title="${%backlinks.enabled}" field="commentsEnabled">
+                        <f:checkbox name="youtrack.commentsEnabled"/>
+                    </f:entry>
 
-                <f:entry title="${%backlinks.visibility}" field="linkVisibility">
-                    <f:textbox name="youtrack.linkVisibility" />
-                </f:entry>
+                    <f:entry title="${%backlinks.visibility}" field="linkVisibility">
+                        <f:textbox name="youtrack.linkVisibility"/>
+                    </f:entry>
 
-                <f:entry title="${%backlinks.silent}" field="silentLinks">
-                    <f:checkbox name="youtrack.silentLinks" />
-                </f:entry>
+                    <f:entry title="${%backlinks.silent}" field="silentLinks">
+                        <f:checkbox name="youtrack.silentLinks"/>
+                    </f:entry>
 
-                <f:block>
-                    <strong>${%execute_commands}</strong>
-                </f:block>
-                <f:entry title="${%execute_commands.enabled}" field="commandsEnabled">
-                    <f:checkbox name="youtrack.commandsEnabled" />
-                </f:entry>
+                    <f:block>
+                        <strong>${%execute_commands}</strong>
+                    </f:block>
+                    <f:entry title="${%execute_commands.enabled}" field="commandsEnabled">
+                        <f:checkbox name="youtrack.commandsEnabled"/>
+                    </f:entry>
 
-                <f:entry title="${%execute_commands.run_as}" field="runAsEnabled">
-                    <f:checkbox name="youtrack.runAsEnabled" />
-                </f:entry>
+                    <f:entry title="${%execute_commands.run_as}" field="runAsEnabled">
+                        <f:checkbox name="youtrack.runAsEnabled"/>
+                    </f:entry>
 
-                <f:entry title="${%execute_commands.silent}" field="silentCommands">
-                    <f:checkbox name="youtrack.silentCommands" />
-                </f:entry>
+                    <f:entry title="${%execute_commands.silent}" field="silentCommands">
+                        <f:checkbox name="youtrack.silentCommands"/>
+                    </f:entry>
 
-                <f:entry title="${%execute_commands.trackCommits}" field="trackCommits">
-                    <f:checkbox name="youtrack.trackCommits" />
-                </f:entry>
+                    <f:entry title="${%execute_commands.trackCommits}" field="trackCommits">
+                        <f:checkbox name="youtrack.trackCommits"/>
+                    </f:entry>
 
-                <f:entry title="${%execute_commands.project_limits}" field="executeProjectLimits">
-                    <f:textbox autoCompleteDelimChar="," name="youtrack.executeProjectLimits" />
-                </f:entry>
+                    <f:entry title="${%execute_commands.project_limits}" field="executeProjectLimits">
+                        <f:textbox autoCompleteDelimChar="," name="youtrack.executeProjectLimits"/>
+                    </f:entry>
 
-                <f:block>
-                    <strong>${%build_updater}</strong>
-                </f:block>
+                    <f:block>
+                        <strong>${%build_updater}</strong>
+                    </f:block>
 
-                <f:entry title="${%build_updater.field}" field="stateFieldName">
-                    <f:textbox name="youtrack.stateFieldName" />
-                </f:entry>
+                    <f:entry title="${%build_updater.field}" field="stateFieldName">
+                        <f:textbox name="youtrack.stateFieldName"/>
+                    </f:entry>
 
-                <f:entry title="${%build_updater.fixed_states}" field="fixedValues">
-                    <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues" />
-                </f:entry>
+                    <f:entry title="${%build_updater.fixed_states}" field="fixedValues">
+                        <f:textbox autoCompleteDelimChar="," name="youtrack.fixedValues"/>
+                    </f:entry>
 
-                <f:block>
-                    <strong>${%prefix_commands}</strong>
-                    <p>
-                        ${%prefix_commands.summary}
-                    </p>
-                </f:block>
+                    <f:block>
+                        <strong>${%testlinker.title}</strong>
+                        <p>
+                            ${%testlinker.summary}
+                        </p>
+                    </f:block>
 
-                <f:entry title="${%prefix_commands.prefix}" field="prefixCommandPrefix">
-                    <f:textbox name="youtrack.prefixes" />
-                </f:entry>
+                    <f:entry title="${%testlinker.project}" field="project">
+                        <f:textbox name="youtrack.project"/>
+                    </f:entry>
 
-                <f:entry title="${%prefix_commands.command}" field="prefixCommandCommand">
-                    <f:textbox name="youtrack.prefixCommand" />
-                </f:entry>
+                    <f:block>
+                        <strong>${%prefix_commands}</strong>
+                        <p>
+                            ${%prefix_commands.summary}
+                        </p>
+                    </f:block>
 
-                <f:block>
-                    <strong>${%testlinker.title}</strong>
-                    <p>
-                        ${%testlinker.summary}
-                    </p>
-                </f:block>
+                    <f:entry title="${%prefix_commands.prefix}" field="prefixCommandPrefix">
+                        <f:textbox name="youtrack.prefixes" />
+                    </f:entry>
 
-                <f:entry title="${%testlinker.project}" field="project">
-                    <f:textbox name="youtrack.project" />
-                </f:entry>
-
-
-
-            </j:if>
+                    <f:entry title="${%prefix_commands.command}" field="prefixCommandCommand">
+                        <f:textbox name="youtrack.prefixCommand" />
+                    </f:entry>
+                </j:when>
+                <j:when test="${descriptor.sites.size() eq 0}">
+                    <f:entry>
+                        <p>${%nosites}</p>
+                        <a href="${rootURL}/configure#youtrack">${%nosites.configure_link}</a>
+                    </f:entry>
+                </j:when>
+            </j:choose>
         </f:optionalBlock>
 
     </f:section>

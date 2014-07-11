@@ -22,6 +22,14 @@ public class Project {
     @Getter @Setter private String shortName;
 
     /**
+     * Constructor for a project.
+     * @param shortName the short name of the project in YouTrack.
+     */
+    public Project(String shortName) {
+        this.shortName = shortName;
+    }
+
+    /**
      * Handler for the project list.
      */
     static class ProjectListHandler extends DefaultHandler {
