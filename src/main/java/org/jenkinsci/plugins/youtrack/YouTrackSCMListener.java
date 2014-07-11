@@ -23,16 +23,45 @@ public class YouTrackSCMListener extends SCMListener {
         private final U second;
     }
 
-    // TODO: This is a prototype implementation to demonstrate functionality.
-    // These should be pulled from job properties.
-    private final static HashMap<String, String> prefixCommands = new HashMap<String, String>();
+    private static Set<String> getFixedValues(YouTrackSite youTrackSite) {
+        Set<String> fixedValues = new HashSet<String>();
+        if (youTrackSite.getFixedValues() != null && !youTrackSite.getFixedValues().equals("")) {
+            String values = youTrackSite.getFixedValues();
+            String[] fixedValueArray = values.split(",");
+            for (String fixedValueFromArray : fixedValueArray) {
+                if (!fixedValueFromArray.trim().equals("")) {
+                    fixedValues.add(fixedValueFromArray.trim());
+                }
+            }
+        } else {
+            fixedValues.add("Fixed");
+        }
 
-    static {
-        prefixCommands.put("Fixes", "Fix");
-        prefixCommands.put("Fixed", "Fix");
-        prefixCommands.put("Eliminates", "Fix tag: {With prejudice}");
-        prefixCommands.put("Reopens", "Reopen");
-    };
+        return fixedValues;
+    }
+
+    // TODO: This is still prototypey.
+    // I don't like this semantic, but I don't know how to make Jenkins UI pull this in as a multi-valued pair of text boxes.
+    private static Map<String, String> getPrefixCommands(YouTrackSite youTrackSite) {
+        if (youTrackSite.getPrefixes() == null || youTrackSite.getPrefixes().equals("")) {
+            return null;
+        }
+
+        if (youTrackSite.getPrefixCommand() == null || youTrackSite.getPrefixCommand().equals("")) {
+            return null;
+        }
+
+        Map<String,String> prefixCommands = new HashMap<String,String>();
+        for (String prefix : youTrackSite.getPrefixes().split(",")) {
+            if (prefix.trim().equals("")) {
+                continue;
+            }
+
+            prefixCommands.put(prefix, youTrackSite.getPrefixCommand());
+        }
+
+        return prefixCommands;
+    }
 
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
@@ -136,7 +165,7 @@ public class YouTrackSCMListener extends SCMListener {
                     revisionsSaver = plugin.getRevisionsSaver();
                 }
                 if ((youTrackSite.isTrackCommits() && (revisionsSaver != null && !revisionsSaver.isProcessed(next.getCommitId()))) || !youTrackSite.isTrackCommits()) {
-                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, prefixCommands, msg);
+                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
                     for (Command command : commandList) {
                         commandAction.addCommand(command);
                     }
@@ -193,9 +222,11 @@ public class YouTrackSCMListener extends SCMListener {
      * @param msg            the message to parse.
      * @return the list of commands tried to be executed.
      */
-    List<Command> executeCommandsIfEnabled(BuildListener listener, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, List<Issue> fixedIssues, ChangeLogSet.Entry changeLogEntry, Map<String, String> prefixCommands, String msg) {
+    List<Command> executeCommandsIfEnabled(BuildListener listener, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, List<Issue> fixedIssues, ChangeLogSet.Entry changeLogEntry, String msg) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommandsEnabled()) {
+            Map<String, String> prefixCommands = getPrefixCommands(youTrackSite);
+
             String[] lines = msg.split("\n");
 
             for (int i = 0; i < lines.length; i++) {
@@ -214,7 +245,7 @@ public class YouTrackSCMListener extends SCMListener {
                             --prefixLength;
                         }
 
-                        if (prefixLength != 0) {
+                        if (prefixCommands != null && prefixLength != 0) {
                             String prefix = line.substring(0, prefixLength).trim();
                             for (String prefixKey : prefixCommands.keySet()) {
                                 if (prefix.endsWith(prefixKey)) {
@@ -321,18 +352,7 @@ public class YouTrackSCMListener extends SCMListener {
         commands.add(cmd);
         Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
 
-        Set<String> fixedValues = new HashSet<String>();
-        if (youTrackSite.getFixedValues() != null && !youTrackSite.getFixedValues().equals("")) {
-            String values = youTrackSite.getFixedValues();
-            String[] fixedValueArray = values.split(",");
-            for (String fixedValueFromArray : fixedValueArray) {
-                if (!fixedValueFromArray.trim().equals("")) {
-                    fixedValues.add(fixedValueFromArray.trim());
-                }
-            }
-        } else {
-            fixedValues.add("Fixed");
-        }
+        Set<String> fixedValues = getFixedValues(youTrackSite);
 
         if (before != null && after != null && !fixedValues.contains(before.getState()) && fixedValues.contains(after.getState())) {
             fixedIssues.add(after);

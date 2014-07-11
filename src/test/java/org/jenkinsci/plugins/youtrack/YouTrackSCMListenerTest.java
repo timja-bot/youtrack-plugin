@@ -230,8 +230,11 @@ public class YouTrackSCMListenerTest {
 
         YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
         youTrackSite.setCommandsEnabled(true);
-
         youTrackSite.setPluginEnabled(true);
+        // For the way the tests are mocked, should this be necessary?
+        // I don't see YouTrackProjectProperty.getSite getting invoked that should push these through.
+        youTrackSite.setPrefixes("Fixes,Fixed");
+        youTrackSite.setPrefixCommand("Fix");
 
         YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
@@ -247,7 +250,7 @@ public class YouTrackSCMListenerTest {
     }
 
     YouTrackProjectProperty getProjectProperty() {
-        return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null);
+        return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null, "Fixes,Fixed", "Fix");
     }
 
 

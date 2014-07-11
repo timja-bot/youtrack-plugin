@@ -22,6 +22,8 @@ public class YouTrackSite {
     @Getter @Setter private transient boolean silentLinks;
     @Getter @Setter private transient String project;
     @Getter @Setter private transient String executeProjectLimits;
+    @Getter @Setter private transient String prefixes;
+    @Getter @Setter private transient String prefixCommand;
     @Getter @Setter private boolean trackCommits;
 
     @DataBoundConstructor

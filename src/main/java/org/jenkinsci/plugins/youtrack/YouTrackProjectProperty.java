@@ -83,12 +83,20 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * This is the default project for the integration, used for creating issues.
      */
     @Getter @Setter private String project;
+    /**
+     * Comma-separated list of names to treat as a prefix for prefixCommand
+     */
+    @Getter @Setter private String prefixes;
+    /**
+     * Command to apply to an issue when prefaced by one of the prefix values.
+     */
+    @Getter @Setter private String prefixCommand;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String prefixes, String prefixCommand) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -103,6 +111,8 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.executeProjectLimits = executeProjectLimits;
         this.trackCommits = trackCommits;
         this.project = project;
+        this.prefixes = prefixes;
+        this.prefixCommand = prefixCommand;
     }
 
     @Override
@@ -143,8 +153,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) {
-            sites.replaceBy(req.bindParametersToList(YouTrackSite.class,
-                    "youtrack."));
+            sites.replaceBy(req.bindParametersToList(YouTrackSite.class, "youtrack."));
             save();
             return true;
         }
@@ -317,7 +326,10 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setSilentLinks(silentLinks);
             result.setExecuteProjectLimits(executeProjectLimits);
             result.setTrackCommits(trackCommits);
-            result.setProject(project);        }
+            result.setProject(project);
+            result.setPrefixes(prefixes);
+            result.setPrefixCommand(prefixCommand);
+        }
         return result;
     }
 }
