@@ -110,6 +110,142 @@ public class YouTrackSCMListenerTest {
         assertEquals(1, commands.size());
     }
 
+    @Test
+    public void testMultilineComment() throws Exception {
+        FreeStyleProject project = mock(FreeStyleProject.class);
+        FreeStyleBuild freeStyleBuild = mock(FreeStyleBuild.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+        BuildListener listener = mock(BuildListener.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        when(freeStyleBuild.getProject()).thenReturn(project);
+        when((FreeStyleBuild) freeStyleBuild.getRootBuild()).thenReturn(freeStyleBuild);
+        when(listener.getLogger()).thenReturn(new PrintStream(new ByteArrayOutputStream()));
+        when(freeStyleBuild.getAction(Matchers.any(Class.class))).thenCallRealMethod();
+        when(freeStyleBuild.getActions()).thenCallRealMethod();
+        Mockito.doCallRealMethod().when(freeStyleBuild).addAction(Matchers.<Action>anyObject());
+
+        String fullCommitMessage = "#TP1-1 Fixed\n\nFoo\nBar\n #TP1-2\nBaz";
+        String partialFirstComment = "Foo\nBar";
+        String partialSecondComment = "Baz";
+
+        Command command1 = new Command();
+        command1.setDate(new Date());
+        command1.setComment(partialFirstComment);
+        command1.setCommand("Fixed");
+        command1.setSilent(false);
+        command1.setIssueId("TP1-1");
+        command1.setStatus(Command.Status.OK);
+        command1.setUsername(user.getUsername());
+        Command command2 = new Command();
+        command2.setDate(new Date());
+        command2.setComment(partialSecondComment);
+        command2.setCommand("Fixed");
+        command2.setSilent(false);
+        command2.setIssueId("TP1-1");
+        command2.setStatus(Command.Status.OK);
+        command2.setUsername(user.getUsername());
+        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, true)).thenReturn(command1);
+        when(server.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, true)).thenReturn(command2);
+
+        ArrayList<Project> projects = new ArrayList<Project>();
+        Project project1 = new Project();
+        project1.setShortName("TP1");
+        projects.add(project1);
+        when(server.getProjects(user)).thenReturn(projects);
+
+        HashSet<MockEntry> scmLogEntries = Sets.newHashSet(new MockEntry(fullCommitMessage));
+
+        when(changeLogSet.iterator()).thenReturn(scmLogEntries.iterator());
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommandsEnabled(true);
+
+        youTrackSite.setPluginEnabled(true);
+
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
+
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
+        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
+
+        youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
+        List<Command> commands = youTrackCommandAction.getCommands();
+        assertEquals(2, commands.size());
+    }
+
+    @Test
+    public void testExecutePrefixCommand() throws Exception {
+        FreeStyleProject project = mock(FreeStyleProject.class);
+        FreeStyleBuild freeStyleBuild = mock(FreeStyleBuild.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+        BuildListener listener = mock(BuildListener.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        when(freeStyleBuild.getProject()).thenReturn(project);
+        when((FreeStyleBuild) freeStyleBuild.getRootBuild()).thenReturn(freeStyleBuild);
+        when(listener.getLogger()).thenReturn(new PrintStream(new ByteArrayOutputStream()));
+        when(freeStyleBuild.getAction(Matchers.any(Class.class))).thenCallRealMethod();
+        when(freeStyleBuild.getActions()).thenCallRealMethod();
+        Mockito.doCallRealMethod().when(freeStyleBuild).addAction(Matchers.<Action>anyObject());
+
+        Command command1 = new Command();
+        command1.setDate(new Date());
+        command1.setComment(null);
+        command1.setCommand("Foo");
+        command1.setSilent(false);
+        command1.setIssueId("TP1-1");
+        command1.setStatus(Command.Status.OK);
+        command1.setUsername(user.getUsername());
+        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Foo", null, null, true)).thenReturn(command1);
+        Command command2 = new Command();
+        command2.setDate(new Date());
+        command2.setComment(null);
+        command2.setCommand("Fix");
+        command2.setSilent(false);
+        command2.setIssueId("TP1-1");
+        command2.setStatus(Command.Status.OK);
+        command2.setUsername(user.getUsername());
+        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fix", null, null, true)).thenReturn(command2);
+
+        ArrayList<Project> projects = new ArrayList<Project>();
+        Project project1 = new Project();
+        project1.setShortName("TP1");
+        projects.add(project1);
+        when(server.getProjects(user)).thenReturn(projects);
+
+        HashSet<MockEntry> scmLogEntries = Sets.newHashSet(new MockEntry("Fixes #TP1-1 Foo"));
+
+        when(changeLogSet.iterator()).thenReturn(scmLogEntries.iterator());
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommandsEnabled(true);
+
+        youTrackSite.setPluginEnabled(true);
+
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
+
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
+        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
+
+        youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
+        List<Command> commands = youTrackCommandAction.getCommands();
+        assertEquals(2, commands.size());
+    }
+
     YouTrackProjectProperty getProjectProperty() {
         return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null);
     }
