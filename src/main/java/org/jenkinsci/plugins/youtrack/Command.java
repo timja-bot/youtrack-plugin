@@ -2,12 +2,14 @@ package org.jenkinsci.plugins.youtrack;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 
 /**
  * This class represents a command performed by this plugin.
  */
+@ToString
 public class Command {
     public enum Status {OK, FAILED, NOT_LOGGED_IN}
 

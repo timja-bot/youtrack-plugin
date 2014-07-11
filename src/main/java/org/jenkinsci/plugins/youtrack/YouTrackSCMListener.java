@@ -226,9 +226,23 @@ public class YouTrackSCMListener extends SCMListener {
                     }
 
                     if (i + 1 < lines.length) {
-                        String l = lines[i + 1];
-                        if (!l.contains("#")) {
-                            comment = l;
+                        // Consider all lines following the action one to be a comment,
+                        // until we see another "#"
+                        // We can keep moving i at this point since any lines we process
+                        // shouldn't be considered for commands.
+                        for (++i, comment = ""; i < lines.length; ++i) {
+                            String nextLine = lines[i];
+                            if (nextLine.contains("#")) {
+                                // Reset so we process this line again in the next iteration.
+                                --i;
+                                break;
+                            }
+                            comment += nextLine + "\n";
+                        }
+
+                        comment = comment.trim();
+                        if (comment == "") {
+                            comment = null;
                         }
                     }
 
