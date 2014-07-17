@@ -4,6 +4,8 @@ import hudson.Extension;
 import hudson.model.*;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
+import lombok.Getter;
+import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
@@ -24,68 +26,77 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     /**
      * The name of the site.
      */
-    private String siteName;
+    @Getter @Setter private String siteName;
 
     /**
      * If the YouTrack plugin is enabled.
      */
-    private boolean pluginEnabled;
+    @Getter @Setter private boolean pluginEnabled;
     /**
      * If ping back comments is enabled.
      */
-    private boolean commentsEnabled;
+    @Getter @Setter private boolean commentsEnabled;
     /**
      * If executing commands is enabled.
      */
-    private boolean commandsEnabled;
+    @Getter @Setter private boolean commandsEnabled;
     /**
      * If the commands should be run as the vcs user.
      */
-    private boolean runAsEnabled;
+    @Getter @Setter private boolean runAsEnabled;
 
     /**
      * If ChangeLog annotations is enabled.
      */
-    private boolean annotationsEnabled;
+    @Getter @Setter private boolean annotationsEnabled;
 
     /**
      * The name of the group comment links should be visible for.
      */
-    private String linkVisibility;
+    @Getter @Setter private String linkVisibility;
     /**
      * Name of state field to check for weather an issue is selected.
      */
-    private String stateFieldName;
+    @Getter @Setter private String stateFieldName;
     /**
      * Comma-separated list of values that are seen as fixed.
      */
-    private String fixedValues;
+    @Getter @Setter private String fixedValues;
     /**
      * Execute commands silently, i.e. do not notify watchers.
      */
-    private boolean silentCommands;
+    @Getter @Setter private boolean silentCommands;
 
     /**
      * Execute link comment silently.
      */
-    private boolean silentLinks;
+    @Getter @Setter private boolean silentLinks;
     /**
      * Limits the projects commands are applied to.
      */
-    private String executeProjectLimits;
+    @Getter @Setter private String executeProjectLimits;
     /**
      * Tracks the processed commits.
      */
-    private boolean trackCommits;
+    @Getter @Setter private boolean trackCommits;
     /**
      * This is the default project for the integration, used for creating issues.
      */
-    private String project;    @Extension
+    @Getter @Setter private String project;
+    /**
+     * Comma-separated list of names to treat as a prefix for prefixCommand
+     */
+    @Getter @Setter private String prefixes;
+    /**
+     * Command to apply to an issue when prefaced by one of the prefix values.
+     */
+    @Getter @Setter private String prefixCommand;
+
+    @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
-
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String prefixes, String prefixCommand) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -100,6 +111,8 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.executeProjectLimits = executeProjectLimits;
         this.trackCommits = trackCommits;
         this.project = project;
+        this.prefixes = prefixes;
+        this.prefixCommand = prefixCommand;
     }
 
     @Override
@@ -107,117 +120,6 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         return DESCRIPTOR;
     }
 
-    public boolean isSilentLinks() {
-        return silentLinks;
-    }
-
-    public void setSilentLinks(boolean silentLinks) {
-        this.silentLinks = silentLinks;
-    }
-
-    public boolean isPluginEnabled() {
-        return pluginEnabled;
-    }
-
-    public void setPluginEnabled(boolean pluginEnabled) {
-        this.pluginEnabled = pluginEnabled;
-    }
-
-    public boolean isCommentsEnabled() {
-        return commentsEnabled;
-    }
-
-    public void setCommentsEnabled(boolean commentsEnabled) {
-        this.commentsEnabled = commentsEnabled;
-    }
-
-    public boolean isCommandsEnabled() {
-        return commandsEnabled;
-    }
-
-    public void setCommandsEnabled(boolean commandsEnabled) {
-        this.commandsEnabled = commandsEnabled;
-    }
-
-    public boolean isRunAsEnabled() {
-        return runAsEnabled;
-    }
-
-    public void setRunAsEnabled(boolean runAsEnabled) {
-        this.runAsEnabled = runAsEnabled;
-    }
-
-    public String getSiteName() {
-        return siteName;
-    }
-
-    public void setSiteName(String siteName) {
-        this.siteName = siteName;
-    }
-
-    public boolean isAnnotationsEnabled() {
-        return annotationsEnabled;
-    }
-
-    public void setAnnotationsEnabled(boolean annotationsEnabled) {
-        this.annotationsEnabled = annotationsEnabled;
-    }
-
-    public String getLinkVisibility() {
-        return linkVisibility;
-    }
-
-    public void setLinkVisibility(String linkVisibility) {
-        this.linkVisibility = linkVisibility;
-    }
-
-    public boolean isSilentCommands() {
-        return silentCommands;
-    }
-
-    public void setSilentCommands(boolean silentCommands) {
-        this.silentCommands = silentCommands;
-    }
-
-    public String getStateFieldName() {
-        return stateFieldName;
-    }
-
-    public void setStateFieldName(String stateFieldName) {
-        this.stateFieldName = stateFieldName;
-    }
-
-    public String getFixedValues() {
-        return fixedValues;
-    }
-
-    public void setFixedValues(String fixedValues) {
-        this.fixedValues = fixedValues;
-    }
-
-
-    public String getProject() {
-        return project;
-    }
-
-    public void setProject(String project) {
-        this.project = project;
-    }
-    public String getExecuteProjectLimits() {
-        return executeProjectLimits;
-    }
-
-    public void setExecuteProjectLimits(String executeProjectLimits) {
-        this.executeProjectLimits = executeProjectLimits;
-    }
-
-    public boolean isTrackCommits() {
-        return trackCommits;
-    }
-
-    public void setTrackCommits(boolean trackCommits) {
-        this.trackCommits = trackCommits;
-    }
     public static final class DescriptorImpl extends JobPropertyDescriptor {
         private final CopyOnWriteList<YouTrackSite> sites = new CopyOnWriteList<YouTrackSite>();
 
@@ -251,8 +153,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) {
-            sites.replaceBy(req.bindParametersToList(YouTrackSite.class,
-                    "youtrack."));
+            sites.replaceBy(req.bindParametersToList(YouTrackSite.class, "youtrack."));
             save();
             return true;
         }
@@ -425,7 +326,10 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setSilentLinks(silentLinks);
             result.setExecuteProjectLimits(executeProjectLimits);
             result.setTrackCommits(trackCommits);
-            result.setProject(project);        }
+            result.setProject(project);
+            result.setPrefixes(prefixes);
+            result.setPrefixCommand(prefixCommand);
+        }
         return result;
     }
 }

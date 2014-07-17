@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -10,55 +14,22 @@ import java.util.List;
 /**
  * This object represents a user.
  */
+@NoArgsConstructor
 public class User {
     /**
      * The username/login of the user.
      */
-    private String username;
-    /**
-     * The set of cookies if this user has a session.
-     */
-    private transient List<String> cookies;
+    @Getter @Setter private String username;
 
     /**
      * True if the user object is logged in.
      */
-    private boolean loggedIn;
+    @Getter @Setter private boolean loggedIn;
 
     /**
-     * Constructs a user.
+     * The set of cookies if this user has a session.
      */
-    public User() {
-        cookies = new ArrayList<String>();
-    }
-
-    public boolean isLoggedIn() {
-        return loggedIn;
-    }
-
-    public void setLoggedIn(boolean loggedIn) {
-        this.loggedIn = loggedIn;
-    }
-
-    /**
-     * @return the username of the user.
-     */
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    /**
-     * Gets the list of cookie strings for this user.
-     *
-     * @return set of cookie strings.
-     */
-    public List<String> getCookies() {
-        return cookies;
-    }
+    @Getter private transient List<String> cookies = new ArrayList<String>();
 
     /**
      * Handler for parsing user query if will find the first user
@@ -66,9 +37,9 @@ public class User {
      */
     public static class UserRefHandler extends DefaultHandler {
         /**
-         * The user result.
+         * Gets the first user found. Should first be called when parsing if finished.
          */
-        private User user;
+        @Getter private User user;
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -78,16 +49,5 @@ public class User {
                 user.username = attributes.getValue("login");
             }
         }
-
-        /**
-         * Gets the first user found. Should first be called when parsing if finished.
-         *
-         * @return the first user found in parsed xml.
-         */
-        public User getUser() {
-            return user;
-        }
-
-
     }
 }

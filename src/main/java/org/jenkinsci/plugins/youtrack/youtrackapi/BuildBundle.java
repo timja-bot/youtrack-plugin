@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -10,17 +14,12 @@ import java.util.List;
 /**
  * This class represents a build bundle.
  */
+@RequiredArgsConstructor
 public class BuildBundle {
-    private String name;
+    @Getter private final String name;
 
-    public BuildBundle(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
     public static class Handler extends DefaultHandler {
+        @Getter
         private List<BuildBundle> bundles;
 
         @Override
@@ -37,10 +36,6 @@ public class BuildBundle {
                 String bundleName = attributes.getValue("name");
                 bundles.add(new BuildBundle(bundleName));
             }
-        }
-
-        public List<BuildBundle> getBundles() {
-            return bundles;
         }
     }
 }

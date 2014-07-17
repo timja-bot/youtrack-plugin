@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -10,25 +14,13 @@ import java.util.List;
 /**
  * This class represents a group.
  */
+@RequiredArgsConstructor
 public class Group {
-    private String name;
-    private String url;
-
-    public Group(String groupName, String groupUrl) {
-        this.name = groupName;
-        this.url = groupUrl;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
+    @Getter private final String name;
+    @Getter private final String url;
 
     public static class GroupListHandler extends DefaultHandler {
-        private List<Group> groups;
+        @Getter private List<Group> groups;
 
         @Override
         public void startDocument() throws SAXException {
@@ -45,10 +37,6 @@ public class Group {
                 Group group = new Group(groupName, groupUrl);
                 groups.add(group);
             }
-        }
-
-        public List<Group> getGroups() {
-            return groups;
         }
     }
 }

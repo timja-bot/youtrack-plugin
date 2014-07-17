@@ -17,4 +17,3 @@ YouTrack sites can be set up under global configuration. For each job a site can
 set.
 
 There is also a build step to update the a YouTrack Build bundle with the build.
-

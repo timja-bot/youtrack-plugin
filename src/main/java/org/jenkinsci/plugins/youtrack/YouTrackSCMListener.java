@@ -5,6 +5,7 @@ import hudson.model.BuildListener;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
+import lombok.Data;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 
@@ -15,6 +16,52 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class YouTrackSCMListener extends SCMListener {
+
+    @Data
+    private static class Pair<T, U> {
+        private final T first;
+        private final U second;
+    }
+
+    private static Set<String> getFixedValues(YouTrackSite youTrackSite) {
+        Set<String> fixedValues = new HashSet<String>();
+        if (youTrackSite.getFixedValues() != null && !youTrackSite.getFixedValues().equals("")) {
+            String values = youTrackSite.getFixedValues();
+            String[] fixedValueArray = values.split(",");
+            for (String fixedValueFromArray : fixedValueArray) {
+                if (!fixedValueFromArray.trim().equals("")) {
+                    fixedValues.add(fixedValueFromArray.trim());
+                }
+            }
+        } else {
+            fixedValues.add("Fixed");
+        }
+
+        return fixedValues;
+    }
+
+    // TODO: This is still prototypey.
+    // I don't like this semantic, but I don't know how to make Jenkins UI pull this in as a multi-valued pair of text boxes.
+    private static Map<String, String> getPrefixCommands(YouTrackSite youTrackSite) {
+        if (youTrackSite.getPrefixes() == null || youTrackSite.getPrefixes().equals("")) {
+            return null;
+        }
+
+        if (youTrackSite.getPrefixCommand() == null || youTrackSite.getPrefixCommand().equals("")) {
+            return null;
+        }
+
+        Map<String,String> prefixCommands = new HashMap<String,String>();
+        for (String prefix : youTrackSite.getPrefixes().split(",")) {
+            if (prefix.trim().equals("")) {
+                continue;
+            }
+
+            prefixCommands.put(prefix.trim().toLowerCase(), youTrackSite.getPrefixCommand());
+        }
+
+        return prefixCommands;
+    }
 
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
@@ -94,7 +141,7 @@ public class YouTrackSCMListener extends SCMListener {
                 msg = next.getMsg();
             }
 
-            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, listener, commentedIssueIds);
+            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, next.getCommitId(), listener, commentedIssueIds);
             for (Command command : commands) {
                 commandAction.addCommand(command);
             }
@@ -173,41 +220,62 @@ public class YouTrackSCMListener extends SCMListener {
      * @param projects       projects.
      * @param fixedIssues    list to fill with fixed issues.
      * @param changeLogEntry the ChangeLogEntry.
+     * @param prefixCommands Map of prefix phrases that may precede an issue that should execute commands
      * @param msg            the message to parse.
      * @return the list of commands tried to be executed.
      */
     List<Command> executeCommandsIfEnabled(BuildListener listener, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, List<Issue> fixedIssues, ChangeLogSet.Entry changeLogEntry, String msg) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommandsEnabled()) {
+            Map<String, String> prefixCommands = getPrefixCommands(youTrackSite);
+
             String[] lines = msg.split("\n");
 
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 if (line.contains("#")) {
-
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (Project project : projects) {
-                        stringBuilder.append("#").append(project.getShortName()).append("|");
-                    }
-                    if (stringBuilder.length() > 0) {
-                        stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-                    }
-
                     String comment = null;
                     String issueStart = line.substring(line.indexOf("#") + 1);
                     boolean isSilent = false;
+                    String extraPrefixCommand = null;
                     int hashPosition = line.indexOf("#");
                     if (hashPosition != 0) {
+                        int prefixLength = hashPosition;
                         char charBefore = line.charAt(hashPosition - 1);
                         if (charBefore == '!') {
                             isSilent = true;
+                            --prefixLength;
+                        }
+
+                        if (prefixCommands != null && prefixLength != 0) {
+                            String prefix = line.substring(0, prefixLength).trim().toLowerCase();
+                            for (String prefixKey : prefixCommands.keySet()) {
+                                if (prefix.endsWith(prefixKey)) {
+                                    extraPrefixCommand = prefixCommands.get(prefixKey);
+                                    break;
+                                }
+                            }
                         }
                     }
 
                     if (i + 1 < lines.length) {
-                        String l = lines[i + 1];
-                        if (!l.contains("#")) {
-                            comment = l;
+                        // Consider all lines following the action one to be a comment,
+                        // until we see another "#"
+                        // We can keep moving i at this point since any lines we process
+                        // shouldn't be considered for commands.
+                        for (++i, comment = ""; i < lines.length; ++i) {
+                            String nextLine = lines[i];
+                            if (nextLine.contains("#")) {
+                                // Reset so we process this line again in the next iteration.
+                                --i;
+                                break;
+                            }
+                            comment += nextLine + "\n";
+                        }
+
+                        comment = comment.trim();
+                        if (comment == "") {
+                            comment = null;
                         }
                     }
 
@@ -215,80 +283,85 @@ public class YouTrackSCMListener extends SCMListener {
                     for (Project project : projects) {
                         if (issueStart.startsWith(project.getShortName() + "-")) {
                             p = project;
+                            break;
                         }
                     }
 
-                    findIssueId(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, comment, issueStart, p, listener, commands, isSilent);
+                    if (p == null) {
+                        continue;
+                    }
+
+                    Pair<String, String> issueAndCommand = getIssueAndCommand(p, issueStart);
+                    if (issueAndCommand == null) {
+                        continue;
+                    }
+
+                    if (extraPrefixCommand != null) {
+                        applyCommandToIssue(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), extraPrefixCommand, null, listener, commands, isSilent);
+                    }
+                    applyCommandToIssue(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), issueAndCommand.getSecond(), comment, listener, commands, isSilent);
                 }
             }
         }
         return commands;
     }
 
-    private void findIssueId(YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String comment, String issueStart, Project p, BuildListener listener, List<Command> commands, boolean silent) {
-        if (p != null) {
-            Pattern projectPattern = Pattern.compile("(" + p.getShortName() + "-" + "(\\d+)" + ")( )?(.*)");
+    private static Pair<String, String> getIssueAndCommand(Project p, String issueStart) {
+        Pattern projectPattern = Pattern.compile("(" + p.getShortName() + "-" + "(\\d+)" + ")( )?(.*)");
 
-            Matcher matcher = projectPattern.matcher(issueStart);
-            while (matcher.find()) {
-                if (matcher.groupCount() >= 1) {
-                    String issueId = p.getShortName() + "-" + matcher.group(2);
-                    User userByEmail = null;
-                    if (youTrackSite.isRunAsEnabled()) {
-                        String address = next.getAuthor().getProperty(Mailer.UserProperty.class).getAddress();
-                        userByEmail = youTrackServer.getUserByEmail(user, address);
-                        if (userByEmail == null) {
-                            listener.getLogger().println("Failed to find user with e-mail: " + address);
-                        }
-                    }
+        Matcher matcher = projectPattern.matcher(issueStart);
+        // TODO: Should this support invoking commands on multiple issues when they're on the same line?
+        // And even including the second mention as part of the command to the first?
+        // while (matcher.find())
+        if (!matcher.find() || matcher.groupCount() < 1) {
+            return null;
+        }
 
-                    String stateFieldName = "State";
-                    if (youTrackSite.getStateFieldName() != null && !youTrackSite.getStateFieldName().equals("")) {
-                        stateFieldName = youTrackSite.getStateFieldName();
-                    }
+        String issueId = p.getShortName() + "-" + matcher.group(2);
+        String command = matcher.group(4);
 
-                    //Get the issue state, then apply command, and get the issue state again.
-                    //to know whether the command has been marked as fixed, instead of trying to
-                    //interpret the command. This means however that there is a possibility for
-                    //the user to change state between the before and the after call, so the after
-                    //state can be affected by something else than the command.
-                    Issue before = youTrackServer.getIssue(user, issueId, stateFieldName);
-                    String command = matcher.group(4);
-                    boolean isSilent = youTrackSite.isSilentCommands() || silent;
-                    Command cmd = youTrackServer.applyCommand(youTrackSite.getName(), user, new Issue(issueId), command, comment, userByEmail, !isSilent);
-                    if (cmd.getStatus() == Command.Status.OK) {
-                        listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
-                    } else {
-                        listener.getLogger().println("FAILED: Applying command: " + command + " to issue: " + issueId);
-                    }
-                    commands.add(cmd);
-                    Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
+        return new Pair<String, String>(issueId, command);
+    }
 
-                    Set<String> fixedValues = new HashSet<String>();
-                    if (youTrackSite.getFixedValues() != null && !youTrackSite.getFixedValues().equals("")) {
-                        String values = youTrackSite.getFixedValues();
-                        String[] fixedValueArray = values.split(",");
-                        for (String fixedValueFromArray : fixedValueArray) {
-                            if (!fixedValueFromArray.trim().equals("")) {
-                                fixedValues.add(fixedValueFromArray.trim());
-                            }
-                        }
-                    } else {
-                        fixedValues.add("Fixed");
-                    }
-
-                    if (before != null && after != null && !fixedValues.contains(before.getState()) && fixedValues.contains(after.getState())) {
-                        fixedIssues.add(after);
-                    }
-
-                }
-
+    private void applyCommandToIssue(YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String issueId, String command, String comment, BuildListener listener, List<Command> commands, boolean silent) {
+        User userByEmail = null;
+        if (youTrackSite.isRunAsEnabled()) {
+            String address = next.getAuthor().getProperty(Mailer.UserProperty.class).getAddress();
+            userByEmail = youTrackServer.getUserByEmail(user, address);
+            if (userByEmail == null) {
+                listener.getLogger().println("Failed to find user with e-mail: " + address);
             }
+        }
 
+        String stateFieldName = "State";
+        if (youTrackSite.getStateFieldName() != null && !youTrackSite.getStateFieldName().equals("")) {
+            stateFieldName = youTrackSite.getStateFieldName();
+        }
+
+        //Get the issue state, then apply command, and get the issue state again.
+        //to know whether the command has been marked as fixed, instead of trying to
+        //interpret the command. This means however that there is a possibility for
+        //the user to change state between the before and the after call, so the after
+        //state can be affected by something else than the command.
+        Issue before = youTrackServer.getIssue(user, issueId, stateFieldName);
+        boolean isSilent = youTrackSite.isSilentCommands() || silent;
+        Command cmd = youTrackServer.applyCommand(youTrackSite.getName(), user, new Issue(issueId), command, comment, userByEmail, !isSilent);
+        if (cmd.getStatus() == Command.Status.OK) {
+            listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
+        } else {
+            listener.getLogger().println("FAILED: Applying command: " + command + " to issue: " + issueId);
+        }
+        commands.add(cmd);
+        Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
+
+        Set<String> fixedValues = getFixedValues(youTrackSite);
+
+        if (before != null && after != null && !fixedValues.contains(before.getState()) && fixedValues.contains(after.getState())) {
+            fixedIssues.add(after);
         }
     }
 
-    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, BuildListener listener, Set<String> commentedIssueIds) {
+    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, String commitId, BuildListener listener, Set<String> commentedIssueIds) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
@@ -298,7 +371,7 @@ public class YouTrackSCMListener extends SCMListener {
                 while (matcher.find()) {
                     if (matcher.groupCount() >= 1) {
                         String issueId = shortName + "-" + matcher.group(2);
-                        String commentText = "Related build: " + getAbsoluteUrlForBuild(build);
+                        String commentText = "Related build: " + getAbsoluteUrlForBuild(build) + "\nSHA: " + commitId;
                         Command comment = null;
                         if (!commentedIssueIds.contains(issueId)) {
                             comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());

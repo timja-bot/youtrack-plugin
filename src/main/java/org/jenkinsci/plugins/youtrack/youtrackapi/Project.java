@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -10,30 +14,12 @@ import java.util.List;
 /**
  * This class represents a project.
  */
+@NoArgsConstructor
 public class Project {
     /**
      * The short name of the project.
      */
-    private String shortName;
-
-    /**
-     * @return the short name of the project.
-     */
-    public String getShortName() {
-        return shortName;
-    }
-
-    /**
-     * Sets the short name of the project.
-     *
-     * @param shortName the short name.
-     */
-    public void setShortName(String shortName) {
-        this.shortName = shortName;
-    }
-
-    public Project() {
-    }
+    @Getter @Setter private String shortName;
 
     /**
      * Constructor for a project.
@@ -48,18 +34,9 @@ public class Project {
      */
     static class ProjectListHandler extends DefaultHandler {
         /**
-         * List for holding the results.
-         */
-        private List<Project> projects;
-
-        /**
          * Returns the projects found in the xml, should first be called when parsing is over.
-         *
-         * @return the projects found
          */
-        public List<Project> getProjects() {
-            return projects;
-        }
+        @Getter private List<Project> projects;
 
         @Override
         public void startDocument() throws SAXException {

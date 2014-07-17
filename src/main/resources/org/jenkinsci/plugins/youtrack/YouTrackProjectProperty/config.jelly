@@ -71,7 +71,6 @@
                         <strong>${%build_updater}</strong>
                     </f:block>
 
-
                     <f:entry title="${%build_updater.field}" field="stateFieldName">
                         <f:textbox name="youtrack.stateFieldName"/>
                     </f:entry>
@@ -89,6 +88,21 @@
 
                     <f:entry title="${%testlinker.project}" field="project">
                         <f:textbox name="youtrack.project"/>
+                    </f:entry>
+
+                    <f:block>
+                        <strong>${%prefix_commands}</strong>
+                        <p>
+                            ${%prefix_commands.summary}
+                        </p>
+                    </f:block>
+
+                    <f:entry title="${%prefix_commands.prefix}" field="prefixCommandPrefix">
+                        <f:textbox name="youtrack.prefixes" />
+                    </f:entry>
+
+                    <f:entry title="${%prefix_commands.command}" field="prefixCommandCommand">
+                        <f:textbox name="youtrack.prefixCommand" />
                     </f:entry>
                 </j:when>
                 <j:when test="${descriptor.sites.size() eq 0}">

@@ -9,6 +9,8 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import lombok.Getter;
+import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
@@ -25,17 +27,16 @@ import java.util.List;
  * Post-build step to create an issue in Youtrack if the build fails.
  */
 public class YoutrackCreateIssueOnBuildFailure extends Notifier {
-    private String project;
-    private String summary;
-    private String description;
-    private String threshold;
-    private String visibility;
-    private String command;
+    @Getter @Setter private String project;
+    @Getter @Setter private String summary;
+    @Getter @Setter private String description;
+    @Getter @Setter private String threshold;
+    @Getter @Setter private String visibility;
+    @Getter @Setter private String command;
 
     public static final String FAILURE = "failure";
 
     public static final String FAILUREORUNSTABL = "failureOrUnstable";
-
 
     @DataBoundConstructor
     public YoutrackCreateIssueOnBuildFailure(String project, String summary, String description, String threshold, String visibility, String command) {
@@ -45,54 +46,6 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
         this.threshold = threshold;
         this.visibility = visibility;
         this.command = command;
-    }
-
-    public String getThreshold() {
-        return threshold;
-    }
-
-    public void setThreshold(String threshold) {
-        this.threshold = threshold;
-    }
-
-    public String getVisibility() {
-        return visibility;
-    }
-
-    public void setVisibility(String visibility) {
-        this.visibility = visibility;
-    }
-
-    public String getCommand() {
-        return command;
-    }
-
-    public void setCommand(String command) {
-        this.command = command;
-    }
-
-    public String getProject() {
-        return project;
-    }
-
-    public void setProject(String project) {
-        this.project = project;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override
@@ -129,7 +82,6 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
             }
 
             Command issue = server.createIssue(youTrackSite.getName(), user, project, title, description, command);
-
         }
 
         return true;
@@ -186,7 +138,6 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
         public FormValidation doCheckProject(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
         }
-
 
         public AutoCompletionCandidates doAutoCompleteProject(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
