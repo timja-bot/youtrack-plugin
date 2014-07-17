@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.util.CopyOnWriteList;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -84,13 +86,9 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      */
     @Getter @Setter private String project;
     /**
-     * Comma-separated list of names to treat as a prefix for prefixCommand
+     * Mapping from prefix words to corresponding commands.
      */
-    @Getter @Setter private String prefixes;
-    /**
-     * Command to apply to an issue when prefaced by one of the prefix values.
-     */
-    @Getter @Setter private String prefixCommand;
+    @Getter @Setter private List<PrefixCommandPair> prefixCommandPairs;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
@@ -111,9 +109,9 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.executeProjectLimits = executeProjectLimits;
         this.trackCommits = trackCommits;
         this.project = project;
-        this.prefixes = prefixes;
-        this.prefixCommand = prefixCommand;
+        this.prefixCommandPairs = new ArrayList<PrefixCommandPair>();
     }
+
 
     @Override
     public JobPropertyDescriptor getDescriptor() {
@@ -144,7 +142,13 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @Override
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+
             YouTrackProjectProperty ypp = req.bindParameters(YouTrackProjectProperty.class, "youtrack.");
+            Object prefixCommandArray = ((JSONObject) formData.get("pluginEnabled")).get("prefixCommandPairs");
+
+            List<PrefixCommandPair> commandPairs = req.bindJSONToList(PrefixCommandPair.class, prefixCommandArray);
+            ypp.setPrefixCommandPairs(commandPairs);
+
             if (ypp.siteName == null) {
                 ypp = null;
             }
@@ -327,8 +331,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setExecuteProjectLimits(executeProjectLimits);
             result.setTrackCommits(trackCommits);
             result.setProject(project);
-            result.setPrefixes(prefixes);
-            result.setPrefixCommand(prefixCommand);
+            result.setPrefixCommandPairs(prefixCommandPairs);
         }
         return result;
     }

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.util.List;
+
 public class YouTrackSite {
     @Getter @Setter private String name;
     @Getter @Setter private String url;
@@ -22,8 +24,7 @@ public class YouTrackSite {
     @Getter @Setter private transient boolean silentLinks;
     @Getter @Setter private transient String project;
     @Getter @Setter private transient String executeProjectLimits;
-    @Getter @Setter private transient String prefixes;
-    @Getter @Setter private transient String prefixCommand;
+    @Getter @Setter private transient List<PrefixCommandPair> prefixCommandPairs;
     @Getter @Setter private boolean trackCommits;
 
     @DataBoundConstructor

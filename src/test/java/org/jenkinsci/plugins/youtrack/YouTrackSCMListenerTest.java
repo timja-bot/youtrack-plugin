@@ -333,8 +333,8 @@ public class YouTrackSCMListenerTest {
         youTrackSite.setPluginEnabled(true);
         // For the way the tests are mocked, should this be necessary?
         // I don't see YouTrackProjectProperty.getSite getting invoked that should push these through.
-        youTrackSite.setPrefixes("Fixes,Fixed");
-        youTrackSite.setPrefixCommand("Fix");
+        youTrackSite.setPrefixCommandPairs(Lists.newArrayList(new PrefixCommandPair("Fixes", "Fix"), new PrefixCommandPair("Fixed", "Fix")));
+
 
         YouTrackServer youTrackServer = mock(YouTrackServer.class);
 

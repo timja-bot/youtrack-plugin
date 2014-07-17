@@ -95,15 +95,10 @@
                         <p>
                             ${%prefix_commands.summary}
                         </p>
+                        <f:repeatableProperty field="prefixCommandPairs"  minimum="0" />
                     </f:block>
 
-                    <f:entry title="${%prefix_commands.prefix}" field="prefixCommandPrefix">
-                        <f:textbox name="youtrack.prefixes" />
-                    </f:entry>
 
-                    <f:entry title="${%prefix_commands.command}" field="prefixCommandCommand">
-                        <f:textbox name="youtrack.prefixCommand" />
-                    </f:entry>
                 </j:when>
                 <j:when test="${descriptor.sites.size() eq 0}">
                     <f:entry>

@@ -40,27 +40,26 @@ public class YouTrackSCMListener extends SCMListener {
         return fixedValues;
     }
 
-    // TODO: This is still prototypey.
-    // I don't like this semantic, but I don't know how to make Jenkins UI pull this in as a multi-valued pair of text boxes.
+
+    /**
+     * Converts list of commands to map.
+     * @param youTrackSite site to convert for.
+     * @return map from prefix to command.
+     */
     private static Map<String, String> getPrefixCommands(YouTrackSite youTrackSite) {
-        if (youTrackSite.getPrefixes() == null || youTrackSite.getPrefixes().equals("")) {
+        List<PrefixCommandPair> prefixCommandPairs = youTrackSite.getPrefixCommandPairs();
+        HashMap<String, String> prefixCommandMap = new HashMap<String, String>();
+        if (prefixCommandPairs == null || prefixCommandPairs.isEmpty()) {
             return null;
         }
-
-        if (youTrackSite.getPrefixCommand() == null || youTrackSite.getPrefixCommand().equals("")) {
-            return null;
-        }
-
-        Map<String,String> prefixCommands = new HashMap<String,String>();
-        for (String prefix : youTrackSite.getPrefixes().split(",")) {
-            if (prefix.trim().equals("")) {
-                continue;
+        for (PrefixCommandPair commandPair : prefixCommandPairs) {
+            if (commandPair.getPrefix() != null && !commandPair.getPrefix().isEmpty()) {
+                if (commandPair.getCommand() != null && !commandPair.getCommand().isEmpty()) {
+                    prefixCommandMap.put(commandPair.getPrefix().toLowerCase(), commandPair.getCommand());
+                }
             }
-
-            prefixCommands.put(prefix.trim().toLowerCase(), youTrackSite.getPrefixCommand());
         }
-
-        return prefixCommands;
+        return prefixCommandMap;
     }
 
     @Override
@@ -220,7 +219,6 @@ public class YouTrackSCMListener extends SCMListener {
      * @param projects       projects.
      * @param fixedIssues    list to fill with fixed issues.
      * @param changeLogEntry the ChangeLogEntry.
-     * @param prefixCommands Map of prefix phrases that may precede an issue that should execute commands
      * @param msg            the message to parse.
      * @return the list of commands tried to be executed.
      */
@@ -274,7 +272,7 @@ public class YouTrackSCMListener extends SCMListener {
                         }
 
                         comment = comment.trim();
-                        if (comment == "") {
+                        if (comment.isEmpty()) {
                             comment = null;
                         }
                     }
