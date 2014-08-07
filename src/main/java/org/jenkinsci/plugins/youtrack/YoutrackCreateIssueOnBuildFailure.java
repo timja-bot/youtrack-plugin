@@ -82,6 +82,12 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
             }
 
             Command issue = server.createIssue(youTrackSite.getName(), user, project, title, description, command);
+            YouTrackCommandAction youTrackCommandAction = build.getAction(YouTrackCommandAction.class);
+            if (youTrackCommandAction == null) {
+                youTrackCommandAction = new YouTrackCommandAction(build);
+                build.addAction(youTrackCommandAction);
+            }
+            youTrackCommandAction.addCommand(issue);
         }
 
         return true;
