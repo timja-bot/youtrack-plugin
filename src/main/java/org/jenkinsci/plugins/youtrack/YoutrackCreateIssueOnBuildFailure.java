@@ -88,6 +88,8 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
                 build.addAction(youTrackCommandAction);
             }
             youTrackCommandAction.addCommand(issue);
+
+            listener.getLogger().println("Created new YouTrack issue " + issue.getIssueId());
         }
 
         return true;

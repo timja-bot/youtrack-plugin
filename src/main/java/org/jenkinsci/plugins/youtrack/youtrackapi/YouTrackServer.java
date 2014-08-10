@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
 import org.jenkinsci.plugins.youtrack.Command;
+import org.apache.commons.lang.StringUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -34,6 +35,29 @@ public class YouTrackServer {
      */
     private final String serverUrl;
 
+    private static String getErrorMessage(InputStream errorStream) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream));
+        String l;
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((l = bufferedReader.readLine()) != null) {
+            stringBuilder.append(l).append("\n");
+        }
+        try {
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            SAXParser saxParser = saxParserFactory.newSAXParser();
+            ErrorHandler errorHandler = new ErrorHandler();
+            saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
+            return errorHandler.errorMessage;
+        } catch (ParserConfigurationException e) {
+            LOGGER.log(Level.WARNING, "Could not parse error response", e);
+        } catch (SAXException e) {
+            LOGGER.log(Level.WARNING, "Could not parse error response", e);
+        }
+
+        // If we couldn't parse the body, return the raw response.
+        return stringBuilder.toString();
+    }
+
     /**
      * Constructs a server.
      *
@@ -44,6 +68,15 @@ public class YouTrackServer {
     }
 
     public Command createIssue(String siteName, User user, String project, String title, String description, String command) {
+        Command cmd = createIssuePUT(siteName, user, project, title, description, command);
+        if (cmd.getStatus() == Command.Status.FAILED) {
+            cmd = createIssuePOST(siteName, user, project, title, description, command);
+        }
+
+        return cmd;
+    }
+
+    private Command createIssuePOST(String siteName, User user, String project, String title, String description, String command) {
         Command cmd = new Command();
         cmd.setCommand("[Create issue]");
         cmd.setDate(new Date());
@@ -52,12 +85,82 @@ public class YouTrackServer {
         if (user == null || !user.isLoggedIn()) {
             cmd.setStatus(Command.Status.NOT_LOGGED_IN);
             return null;
-        } else {
-            cmd.setStatus(Command.Status.FAILED);
         }
-        user.setUsername(user.getUsername());
-        try {
 
+        cmd.setStatus(Command.Status.FAILED);
+        try {
+            String params = "project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8");
+
+            URL url = new URL(serverUrl + "/rest/issue?" + params);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+            // Against documentation. This call is supposed to be PUT, but only POST is working.
+            urlConnection.setRequestMethod("POST");
+
+            int responseCode = urlConnection.getResponseCode();
+            // Because we're varying in the POST vs. PUT call, check for a couple possible
+            // success responses, though currently I'm only ever seeing 200 returned.
+            if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                StringBuilder stringBuilder = new StringBuilder();
+                for (String l = null; (l = bufferedReader.readLine()) != null;) {
+                    stringBuilder.append(l).append("\n");
+                }
+
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    CreateIssueHandler handler = new CreateIssueHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), handler);
+                    String issueId = handler.issueId;
+
+                    LOGGER.log(Level.INFO, "Created issue " + issueId);
+
+                    if (issueId != null) {
+                        Issue issue = new Issue(issueId);
+                        if (StringUtils.isNotBlank(command)) {
+                            applyCommand(siteName, user, issue, command, "", null, false);
+                            cmd.setCommand(command);
+                        }
+                        cmd.setIssueId(issueId);
+                    }
+                } catch (Exception e) {
+                    cmd.setCommand("[Unable to apply command]");
+                }
+
+                cmd.setStatus(Command.Status.OK);
+
+                return cmd;
+            }
+
+            cmd.setResponse(getErrorMessage(urlConnection.getErrorStream()));
+            LOGGER.log(Level.WARNING, "Did not create issue: " + cmd.getResponse());
+        } catch (MalformedURLException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
+        } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
+        }
+        return cmd;
+    }
+
+    private Command createIssuePUT(String siteName, User user, String project, String title, String description, String command) {
+        Command cmd = new Command();
+        cmd.setCommand("[Create issue]");
+        cmd.setDate(new Date());
+        cmd.setSiteName(siteName);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return null;
+        }
+
+        cmd.setStatus(Command.Status.FAILED);
+        try {
             String params = "project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8");
 
             URL url = new URL(serverUrl + "/rest/issue?" + params);
@@ -82,35 +185,17 @@ public class YouTrackServer {
                 cmd.setIssueId(issueId);
                 cmd.setStatus(Command.Status.OK);
                 return cmd;
-            } else {
-                cmd.setStatus(Command.Status.FAILED);
-
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
-                String l;
-                StringBuilder stringBuilder = new StringBuilder();
-                while ((l = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(l).append("\n");
-                }
-                try {
-                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    ErrorHandler errorHandler = new ErrorHandler();
-                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
-                    cmd.setResponse(errorHandler.errorMessage);
-                } catch (ParserConfigurationException e) {
-                    cmd.setResponse(e.getMessage());
-                } catch (SAXException e) {
-                    cmd.setResponse(e.getMessage());
-                }
-                System.out.println("Did not create issue: " + cmd.getResponse());
             }
 
+            cmd.setStatus(Command.Status.FAILED);
+            cmd.setResponse(getErrorMessage(urlConnection.getErrorStream()));
+            LOGGER.log(Level.WARNING, "Did not create issue: " + cmd.getResponse());
         } catch (MalformedURLException e) {
             cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
         } catch (IOException e) {
             cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
         }
         return cmd;
     }
@@ -357,27 +442,8 @@ public class YouTrackServer {
                 return command;
             } else {
                 command.setStatus(Command.Status.FAILED);
-
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
-                String l;
-                StringBuilder stringBuilder = new StringBuilder();
-                while ((l = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(l).append("\n");
-                }
-                try {
-                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    ErrorHandler errorHandler = new ErrorHandler();
-                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
-                    command.setResponse(errorHandler.errorMessage);
-                } catch (ParserConfigurationException e) {
-                    command.setResponse(e.getMessage());
-                } catch (SAXException e) {
-                    command.setResponse(e.getMessage());
-                }
+                command.setResponse(getErrorMessage(urlConnection.getErrorStream()));
             }
-
-
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not comment", e);
             command.setResponse(e.getMessage());
@@ -443,34 +509,11 @@ public class YouTrackServer {
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 cmd.setStatus(Command.Status.OK);
                 return cmd;
-            } else {
-
-
-                cmd.setStatus(Command.Status.FAILED);
-
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
-                String l;
-                StringBuilder stringBuilder = new StringBuilder();
-                while ((l = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(l).append("\n");
-                }
-                try {
-                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    ErrorHandler errorHandler = new ErrorHandler();
-                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
-                    cmd.setResponse(errorHandler.errorMessage);
-                } catch (ParserConfigurationException e) {
-                    cmd.setResponse(e.getMessage());
-                } catch (SAXException e) {
-                    cmd.setResponse(e.getMessage());
-                }
-
-
-                LOGGER.log(Level.WARNING, "Could not apply command. Server response: " + stringBuilder.toString());
             }
 
-
+            cmd.setStatus(Command.Status.FAILED);
+            cmd.setResponse(getErrorMessage(urlConnection.getErrorStream()));
+            LOGGER.log(Level.WARNING, "Could not apply command: " + cmd.getResponse());
         } catch (IOException e) {
             cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not apply command", e);
@@ -598,28 +641,10 @@ public class YouTrackServer {
             if (responseCode == HttpURLConnection.HTTP_CREATED) {
                 cmd.setStatus(Command.Status.OK);
                 return cmd;
-            } else {
-                cmd.setStatus(Command.Status.FAILED);
-
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getErrorStream()));
-                String l;
-                StringBuilder stringBuilder = new StringBuilder();
-                while ((l = bufferedReader.readLine()) != null) {
-                    stringBuilder.append(l).append("\n");
-                }
-                try {
-                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    ErrorHandler errorHandler = new ErrorHandler();
-                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
-                    cmd.setResponse(errorHandler.errorMessage);
-                } catch (ParserConfigurationException e) {
-                    cmd.setResponse(e.getMessage());
-                } catch (SAXException e) {
-                    cmd.setResponse(e.getMessage());
-                }
             }
 
+            cmd.setStatus(Command.Status.FAILED);
+            cmd.setResponse(getErrorMessage(urlConnection.getErrorStream()));
         } catch (MalformedURLException e) {
             cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not add to bundle", e);
@@ -728,7 +753,7 @@ public class YouTrackServer {
         return null;
     }
 
-    public static class VersionHandler extends DefaultHandler {
+    private static class VersionHandler extends DefaultHandler {
         boolean inVersion = false;
         private StringBuilder stringBuilder = new StringBuilder();
         private String version;
@@ -761,7 +786,7 @@ public class YouTrackServer {
 
     }
 
-    public static class ErrorHandler extends DefaultHandler {
+    private static class ErrorHandler extends DefaultHandler {
         private StringBuilder stringBuilder = new StringBuilder();
         private boolean inError;
         private String errorMessage;
@@ -793,5 +818,19 @@ public class YouTrackServer {
         }
     }
 
+    private static class CreateIssueHandler extends DefaultHandler {
+        public String issueId;
 
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            if (qName.equals("issue")) {
+                for (int i = 0; i < attributes.getLength(); ++i) {
+                    if (attributes.getQName(i) == "id") {
+                        issueId = attributes.getValue(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }
