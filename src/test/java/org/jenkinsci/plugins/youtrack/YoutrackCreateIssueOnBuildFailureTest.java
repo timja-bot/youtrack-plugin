@@ -144,15 +144,18 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
 
         final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
-        Answer answer = new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        Answer<Command> answer = new Answer<Command>() {
+            public Command answer(InvocationOnMock invocation) throws Throwable {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];
                 command.description = (String) invocation.getArguments()[4];
                 command.command = (String) invocation.getArguments()[5];
                 commandList.add(command);
-                return null;
+                Command issuedCommand = new Command();
+                issuedCommand.setStatus(Command.Status.OK);
+                issuedCommand.setIssueId("PROJECT-1");
+                return issuedCommand;
             }
         };
         doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
@@ -196,15 +199,18 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
 
         final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
-        Answer answer = new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        Answer<Command> answer = new Answer<Command>() {
+            public Command answer(InvocationOnMock invocation) throws Throwable {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];
                 command.description = (String) invocation.getArguments()[4];
                 command.command = (String) invocation.getArguments()[5];
                 commandList.add(command);
-                return null;
+                Command issuedCommand = new Command();
+                issuedCommand.setStatus(Command.Status.OK);
+                issuedCommand.setIssueId("project-1");
+                return issuedCommand;
             }
         };
         doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
@@ -253,15 +259,18 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
 
         final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
-        Answer answer = new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
+        Answer<Command> answer = new Answer<Command>() {
+            public Command answer(InvocationOnMock invocation) throws Throwable {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];
                 command.description = (String) invocation.getArguments()[4];
                 command.command = (String) invocation.getArguments()[5];
                 commandList.add(command);
-                return null;
+                Command issuedCommand = new Command();
+                issuedCommand.setStatus(Command.Status.OK);
+                issuedCommand.setIssueId("project-1");
+                return issuedCommand;
             }
         };
         doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
