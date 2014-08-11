@@ -144,14 +144,15 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
 
             YouTrackProjectProperty ypp = req.bindParameters(YouTrackProjectProperty.class, "youtrack.");
+            if (ypp.siteName == null) {
+                return null;
+            }
+
             Object prefixCommandArray = ((JSONObject) formData.get("pluginEnabled")).get("prefixCommandPairs");
 
             List<PrefixCommandPair> commandPairs = req.bindJSONToList(PrefixCommandPair.class, prefixCommandArray);
             ypp.setPrefixCommandPairs(commandPairs);
 
-            if (ypp.siteName == null) {
-                ypp = null;
-            }
             return ypp;
         }
 
