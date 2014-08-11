@@ -76,9 +76,13 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
 
             if (title == null || "".equals(title)) {
                 title = "Build failure in build " + build.getNumber();
+            } else {
+                title = environment.expand(title);
             }
             if (description == null || "".equals(description)) {
                 description = getAbsoluteUrl(build);
+            } else {
+                description = environment.expand(description);
             }
 
             Command issue = server.createIssue(youTrackSite.getName(), user, project, title, description, command);
