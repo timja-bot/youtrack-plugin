@@ -3,12 +3,8 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.*;
-import org.hamcrest.Matchers;
-import org.hamcrest.core.IsEqual;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
-// I don't know why these tests are failing, but there seems to be something wrong with how the buildListener is setup with Mockito.
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -20,8 +16,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class YoutrackCreateIssueOnBuildFailureTest {
@@ -122,7 +118,6 @@ public class YoutrackCreateIssueOnBuildFailureTest {
     }
 
     @Test
-    @Ignore
     public void testUnstableAndCreateIssueOnUnstable() throws IOException, InterruptedException {
         AbstractBuild build = mock(AbstractBuild.class);
         Launcher launcher = mock(Launcher.class);
@@ -169,12 +164,11 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         when(server.login("user", "password")).thenReturn(user);
         youtrackCreateIssueOnBuildFailure.perform(build, launcher, buildListener);
         String s = stream.toString();
-        assertThat(s.trim(), equalTo(""));
+        assertThat(s.trim(), equalTo("Created new YouTrack issue PROJECT-1"));
         assertThat(1, equalTo(commandList.size()));
     }
 
     @Test
-    @Ignore
     public void testVariableExpansion() throws IOException, InterruptedException {
         AbstractBuild build = mock(AbstractBuild.class);
         Launcher launcher = mock(Launcher.class);
@@ -225,7 +219,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         when(server.login("user", "password")).thenReturn(user);
         youtrackCreateIssueOnBuildFailure.perform(build, launcher, buildListener);
         String s = stream.toString();
-        assertThat(s.trim(), equalTo(""));
+        assertThat(s.trim(), equalTo("Created new YouTrack issue project-1"));
         assertThat(1, equalTo(commandList.size()));
         CreateIssueCommand createIssueCommand = commandList.get(0);
         assertThat("v1", equalTo(createIssueCommand.summary));
@@ -234,7 +228,6 @@ public class YoutrackCreateIssueOnBuildFailureTest {
     }
 
     @Test
-    @Ignore
     public void testDefaultValues() throws IOException, InterruptedException {
         FreeStyleProject mock = mock(FreeStyleProject.class);
         AbstractBuild build = spy(new FreeStyleBuild(mock));
@@ -286,7 +279,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         when(server.login("user", "password")).thenReturn(user);
         youtrackCreateIssueOnBuildFailure.perform(build, launcher, buildListener);
         String s = stream.toString();
-        assertThat(s.trim(), equalTo(""));
+        assertThat(s.trim(), equalTo("Created new YouTrack issue project-1"));
         assertThat(1, equalTo(commandList.size()));
         CreateIssueCommand createIssueCommand = commandList.get(0);
         assertThat("Build failure in build 1", equalTo(createIssueCommand.summary));
