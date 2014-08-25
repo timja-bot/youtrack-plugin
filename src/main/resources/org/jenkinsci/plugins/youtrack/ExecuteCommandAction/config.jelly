@@ -6,10 +6,18 @@
             <f:textbox  />
         </label>
     </f:entry>
+    <f:entry title="${%issueInText}" field="issueInText">
+        <label>
+            <f:textbox  />
+        </label>
+    </f:entry>
     <f:entry title="${%command}" field="command">
         <label>
             <f:textbox />
         </label>
+    </f:entry>
+    <f:entry title="${%comment}" field="comment">
+        <f:textarea/>
     </f:entry>
 
  </j:jelly>

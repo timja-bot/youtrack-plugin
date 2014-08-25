@@ -11,10 +11,10 @@ import hudson.util.FormValidation;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.youtrack.youtrackapi.*;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
-import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -23,23 +23,35 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This is command for executing arbitrary commands on issues.
  */
 public class ExecuteCommandAction extends Builder {
-    @Getter @Setter private String command;
-    @Getter @Setter private String search;
-    @Getter @Setter private String comment;
-    @Getter @Setter private boolean notify;
+    @Getter
+    @Setter
+    private String command;
+    @Getter
+    @Setter
+    private String search;
+    @Getter
+    @Setter
+    private String issueInText;
+    @Getter
+    @Setter
+    private String comment;
 
     @DataBoundConstructor
-    public ExecuteCommandAction(String command, String search, String comment, boolean notify) {
+    public ExecuteCommandAction(String command, String search, String issueInText, String comment) {
         this.command = command;
         this.search = search;
+        this.issueInText = issueInText;
         this.comment = comment;
-        this.notify = notify;
     }
 
     @Override
@@ -54,10 +66,17 @@ public class ExecuteCommandAction extends Builder {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
                 if (user != null && user.isLoggedIn()) {
-                    List<Issue> issues = youTrackServer.search(user, searchQuery);
+                    Set<Issue> issues = new HashSet<Issue>();
+                    if (StringUtils.isNotBlank(searchQuery)) {
+                        issues.addAll(youTrackServer.search(user, searchQuery));
+                    }
+                    if (StringUtils.isNotBlank(issueInText)) {
+                        issues.addAll(findIssuesInText(build, environment, issueInText));
+                    }
                     List<Command> appliedCommands = new ArrayList<Command>();
+                    String expandedComment = environment.expand(comment);
                     for (Issue issue : issues) {
-                        Command appliedCommand = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandToExecute, comment, null, notify);
+                        Command appliedCommand = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandToExecute, expandedComment, null, true);
                         appliedCommands.add(appliedCommand);
                     }
                     if (!appliedCommands.isEmpty()) {
@@ -83,6 +102,29 @@ public class ExecuteCommandAction extends Builder {
             listener.getLogger().println("No site configured");
         }
         return true;
+    }
+
+    private List<Issue> findIssuesInText(AbstractBuild<?, ?> build, EnvVars environment, String issueInText) {
+        String textToSearchForIssues = environment.expand(issueInText);
+        YouTrackSaveProjectShortNamesAction projectShortNamesAction = build.getAction(YouTrackSaveProjectShortNamesAction.class);
+        if (projectShortNamesAction != null) {
+            return findIssuesIds(projectShortNamesAction.getShortNames(), textToSearchForIssues);
+        }
+        return new ArrayList<Issue>();
+    }
+
+    private List<Issue> findIssuesIds(List<String> projects, String issueText) {
+        ArrayList<Issue> issues = new ArrayList<Issue>();
+        String projectIds = StringUtils.join(projects, "|");
+        Pattern projectPattern = Pattern.compile("(" + projectIds + "-" + "(\\d+)" + ")");
+        Matcher matcher = projectPattern.matcher(issueText);
+        while (matcher.find()) {
+            if (matcher.groupCount() >= 1) {
+                String issueId = matcher.group(1);
+                issues.add(new Issue(issueId));
+            }
+        }
+        return issues;
     }
 
 
@@ -112,18 +154,31 @@ public class ExecuteCommandAction extends Builder {
         public AutoCompletionCandidates doAutoCompleteSearch(@AncestorInPath AbstractProject project, @QueryParameter String value) {
             YouTrackSite youTrackSite = YouTrackSite.get(project);
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if(youTrackSite != null) {
+            if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if(user != null) {
-                    List<String> strings = youTrackServer.searchSuggestions(user, value);
-                    for (String string : strings) {
-                        autoCompletionCandidates.add(value + " " + string);
+                if (user != null) {
+                    List<Suggestion> suggestions = youTrackServer.searchSuggestions(user, value);
+                    for (Suggestion suggestion : suggestions) {
+                        if (suggestion.getCompletionStart() == 0) {
+                            String completeSuggestion = emptyIfNull(suggestion.getPrefix()) + suggestion.getOption() + emptyIfNull(suggestion.getSuffix());
+                            autoCompletionCandidates.add(completeSuggestion);
+                        } else {
+                            String validValue = value.substring(0, suggestion.getCompletionStart());
+                            String completeSuggestion = emptyIfNull(suggestion.getPrefix()) + suggestion.getOption() + emptyIfNull(suggestion.getSuffix());
+                            autoCompletionCandidates.add(validValue + completeSuggestion);
+                        }
                     }
                 }
             }
             return autoCompletionCandidates;
         }
 
+
+        public String emptyIfNull(String text) {
+            if (text == null) return "";
+            return text;
+        }
     }
+
 }

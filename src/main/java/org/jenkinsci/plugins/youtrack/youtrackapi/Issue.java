@@ -154,6 +154,9 @@ public class Issue {
         private String option;
         private String description;
         private int completionStart;
+        private int completionEnd;
+        private int matchStart;
+        private int matchEnd;
 
         private StringBuilder stringBuilder = new StringBuilder();
         private boolean inItem;
@@ -164,6 +167,12 @@ public class Issue {
             stringBuilder.setLength(0);
             if (qName.equals("item")) {
                 inItem = true;
+            } else if(qName.equals("completion")) {
+                completionStart = Integer.parseInt(attributes.getValue("start"));
+                completionEnd = Integer.parseInt(attributes.getValue("end"));
+            } else if (qName.equals("match")) {
+                matchStart = Integer.parseInt(attributes.getValue("start"));
+                matchEnd = Integer.parseInt(attributes.getValue("end"));
             }
         }
 
@@ -182,6 +191,10 @@ public class Issue {
                 suggestion.setDescription(description);
                 suggestion.setSuffix(suffix);
                 suggestion.setPrefix(prefix);
+                suggestion.setCompletionStart(completionStart);
+                suggestion.setCompletionEnd(completionEnd);
+                suggestion.setMatchStart(matchStart);
+                suggestion.setMatchEnd(matchEnd);
 
                 suggestions.add(suggestion);
             } else if (qName.equals("suffix")) {

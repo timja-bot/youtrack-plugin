@@ -785,7 +785,7 @@ public class YouTrackServer {
         return null;
     }
 
-    public List<String> searchSuggestions(User user, String current) {
+    public List<Suggestion> searchSuggestions(User user, String current) {
         try {
             URL url = new URL(serverUrl + "/rest/issue/intellisense?filter=" + URLEncoder.encode(current, "UTF-8"));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -814,7 +814,7 @@ public class YouTrackServer {
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not find issues", e);
         }
-        return null;
+        return new ArrayList<Suggestion>();
     }
 
     private static class VersionHandler extends DefaultHandler {
