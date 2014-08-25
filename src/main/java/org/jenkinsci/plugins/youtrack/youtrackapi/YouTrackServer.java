@@ -753,6 +753,70 @@ public class YouTrackServer {
         return null;
     }
 
+    public List<Issue> search(User user, String searchQuery) {
+        try {
+            URL url = new URL(serverUrl + "/rest/issue?filter=" + URLEncoder.encode(searchQuery, "UTF-8") + "&max=" + Integer.MAX_VALUE);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try {
+                    SAXParserFactory factory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = factory.newSAXParser();
+                    Issue.IssueSearchHandler issueSearchHandler = new Issue.IssueSearchHandler();
+                    saxParser.parse(urlConnection.getInputStream(), issueSearchHandler);
+                    return issueSearchHandler.getIssueList();
+                } catch (ParserConfigurationException e) {
+                    LOGGER.log(Level.WARNING, "Could not find issues", e);
+                } catch (SAXException e) {
+                    LOGGER.log(Level.WARNING, "Could not find issues", e);
+                }
+            }
+
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not find issues", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not find issues", e);
+        }
+        return null;
+    }
+
+    public List<String> searchSuggestions(User user, String current) {
+        try {
+            URL url = new URL(serverUrl + "/rest/issue/intellisense?filter=" + URLEncoder.encode(current, "UTF-8"));
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            for (String cookie : user.getCookies()) {
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+
+            int responseCode = urlConnection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try {
+                    SAXParserFactory factory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = factory.newSAXParser();
+                    Issue.IssueSearchSuggestionHandler issueSearchHandler = new Issue.IssueSearchSuggestionHandler();
+                    saxParser.parse(urlConnection.getInputStream(), issueSearchHandler);
+                    return issueSearchHandler.getSuggestions();
+                } catch (ParserConfigurationException e) {
+                    LOGGER.log(Level.WARNING, "Could not find issues", e);
+                } catch (SAXException e) {
+                    LOGGER.log(Level.WARNING, "Could not find issues", e);
+                }
+            }
+
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not find issues", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not find issues", e);
+        }
+        return null;
+    }
+
     private static class VersionHandler extends DefaultHandler {
         boolean inVersion = false;
         private StringBuilder stringBuilder = new StringBuilder();
