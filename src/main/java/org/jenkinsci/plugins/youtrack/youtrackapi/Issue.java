@@ -57,6 +57,13 @@ public class Issue {
     }
 
     @Override
+    public String toString() {
+        return "Issue{" +
+                "id='" + id + '\'' +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }

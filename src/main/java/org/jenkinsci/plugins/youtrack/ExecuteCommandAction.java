@@ -33,18 +33,10 @@ import java.util.regex.Pattern;
  * This is command for executing arbitrary commands on issues.
  */
 public class ExecuteCommandAction extends Builder {
-    @Getter
-    @Setter
-    private String command;
-    @Getter
-    @Setter
-    private String search;
-    @Getter
-    @Setter
-    private String issueInText;
-    @Getter
-    @Setter
-    private String comment;
+    @Getter @Setter private String command;
+    @Getter @Setter private String search;
+    @Getter @Setter private String issueInText;
+    @Getter @Setter private String comment;
 
     @DataBoundConstructor
     public ExecuteCommandAction(String command, String search, String issueInText, String comment) {
@@ -56,14 +48,14 @@ public class ExecuteCommandAction extends Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        YouTrackSite youTrackSite = YouTrackSite.get(build.getProject());
+        YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite != null) {
             if (youTrackSite.isPluginEnabled()) {
                 EnvVars environment = build.getEnvironment(listener);
                 String searchQuery = environment.expand(search);
                 String commandToExecute = environment.expand(command);
 
-                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+                YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
                 if (user != null && user.isLoggedIn()) {
                     Set<Issue> issues = new HashSet<Issue>();
@@ -96,12 +88,20 @@ public class ExecuteCommandAction extends Builder {
                     listener.getLogger().println("User not logged in");
                 }
             } else {
-                listener.getLogger().print("Plugin not enabled");
+                listener.getLogger().println("Plugin not enabled");
             }
         } else {
             listener.getLogger().println("No site configured");
         }
         return true;
+    }
+
+    YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
+        return new YouTrackServer(youTrackSite.getUrl());
+    }
+
+    YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
+        return YouTrackSite.get(build.getProject());
     }
 
     private List<Issue> findIssuesInText(AbstractBuild<?, ?> build, EnvVars environment, String issueInText) {
