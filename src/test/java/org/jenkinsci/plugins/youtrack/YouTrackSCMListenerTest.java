@@ -63,7 +63,7 @@ public class YouTrackSCMListenerTest {
         FreeStyleBuild freeStyleBuild = mock(FreeStyleBuild.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
         BuildListener listener = mock(BuildListener.class);
-        YouTrackServer server = mock(YouTrackServer.class);
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
         User user = new User();
         user.setUsername("tester");
@@ -84,14 +84,14 @@ public class YouTrackSCMListenerTest {
         command.setIssueId("TP1-1");
         command.setStatus(Command.Status.OK);
         command.setUsername(user.getUsername());
-        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", null, null, true)).thenReturn(command);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", null, null, true)).thenReturn(command);
 
 
         ArrayList<Project> projects = new ArrayList<Project>();
         Project project1 = new Project();
         project1.setShortName("TP1");
         projects.add(project1);
-        when(server.getProjects(user)).thenReturn(projects);
+        when(youTrackServer.getProjects(user)).thenReturn(projects);
 
         HashSet<MockEntry> scmLogEntries = Sets.newHashSet(new MockEntry("#TP1-1 Fixed"));
 
@@ -102,13 +102,16 @@ public class YouTrackSCMListenerTest {
 
         youTrackSite.setPluginEnabled(true);
 
-        YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
-        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
-        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
-        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
+        YoutrackIssueUpdater issueUpdate = spy(new YoutrackIssueUpdater());
+        YouTrackSCMListener scmListener = spy(new YouTrackSCMListener());
+        doReturn(youTrackSite).when(issueUpdate).getYouTrackSite(freeStyleBuild);
+        doReturn(youTrackServer).when(issueUpdate).getYouTrackServer(youTrackSite);
+        doReturn(user).when(youTrackServer).login("test","test");
+        doReturn(issueUpdate).when(scmListener).getYoutrackIssueUpdater();
 
-        youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        scmListener.onChangeLogParsed(freeStyleBuild, listener, changeLogSet);
 
         YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
         List<Command> commands = youTrackCommandAction.getCommands();
@@ -119,6 +122,7 @@ public class YouTrackSCMListenerTest {
     @Test
     public void testSingleLinkPerBuild() throws Exception {
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
         FreeStyleBuild build = mock(FreeStyleBuild.class);
         BuildListener listener = mock(BuildListener.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
@@ -128,13 +132,22 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setPluginEnabled(true);
+        youTrackSite.setCommentEnabled(true);
+
         doReturn(Lists.newArrayList(new Project("TP1"))).when(server).getProjects(user);
         doReturn(Lists.newArrayList(new MockEntry("#TP1-1 In Progress"), new MockEntry("#TP1-1 Fixed")).iterator()).when(changeLogSet).iterator();
         doReturn(build).when(build).getRootBuild();
         doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
-        doReturn("http://test.com/buildurl").when(youTrackSCMListener).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+        doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
+        doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
+        doReturn(user).when(server).login("test","test");
+        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
 
 
+        //todo: cn be replaced by verify
         final List<Command> commentCommands = new ArrayList<Command>();
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -152,14 +165,7 @@ public class YouTrackSCMListenerTest {
             }
         }).when(server).comment(anyString(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
 
-
-
-
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
-        youTrackSite.setCommentEnabled(true);
-
-
-        youTrackSCMListener.performActions(build, listener, youTrackSite, changeLogSet.iterator(), server, user);
+        youTrackSCMListener.onChangeLogParsed(build, listener, changeLogSet);
 
         assertThat(commentCommands.size(), is(1));
     }
@@ -167,6 +173,10 @@ public class YouTrackSCMListenerTest {
     @Test
     public void testLinkForAllIssue() throws Exception {
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+
+
+
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
         FreeStyleBuild build = mock(FreeStyleBuild.class);
         BuildListener listener = mock(BuildListener.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
@@ -176,14 +186,23 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setPluginEnabled(true);
+        youTrackSite.setCommentEnabled(true);
+
         doReturn(Lists.newArrayList(new Project("TP1"), new Project("TP2"))).when(server).getProjects(user);
         doReturn(Lists.newArrayList(new MockEntry("#TP1-1 In Progress"), new MockEntry("#TP1-2 Fixed")).iterator()).when(changeLogSet).iterator();
         doReturn(build).when(build).getRootBuild();
         doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
-        doReturn("http://test.com/buildurl").when(youTrackSCMListener).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+        doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?, ?>>any());
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
+        doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
+        doReturn(user).when(server).login("test","test");
 
 
         final List<Command> commentCommands = new ArrayList<Command>();
+        //TODO: replace by verify
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Command command = new Command();
@@ -200,11 +219,10 @@ public class YouTrackSCMListenerTest {
             }
         }).when(server).comment(anyString(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
-        youTrackSite.setCommentEnabled(true);
 
 
-        youTrackSCMListener.performActions(build, listener, youTrackSite, changeLogSet.iterator(), server, user);
+
+        youTrackSCMListener.onChangeLogParsed(build, listener, changeLogSet);
 
         assertThat(commentCommands.size(), is(2));
     }
@@ -216,7 +234,8 @@ public class YouTrackSCMListenerTest {
         FreeStyleBuild freeStyleBuild = mock(FreeStyleBuild.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
         BuildListener listener = mock(BuildListener.class);
-        YouTrackServer server = mock(YouTrackServer.class);
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
+
 
         User user = new User();
         user.setUsername("tester");
@@ -249,14 +268,14 @@ public class YouTrackSCMListenerTest {
         command2.setIssueId("TP1-1");
         command2.setStatus(Command.Status.OK);
         command2.setUsername(user.getUsername());
-        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, true)).thenReturn(command1);
-        when(server.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, true)).thenReturn(command2);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, true)).thenReturn(command1);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, true)).thenReturn(command2);
 
         ArrayList<Project> projects = new ArrayList<Project>();
         Project project1 = new Project();
         project1.setShortName("TP1");
         projects.add(project1);
-        when(server.getProjects(user)).thenReturn(projects);
+        when(youTrackServer.getProjects(user)).thenReturn(projects);
 
         HashSet<MockEntry> scmLogEntries = Sets.newHashSet(new MockEntry(fullCommitMessage));
 
@@ -267,13 +286,15 @@ public class YouTrackSCMListenerTest {
 
         youTrackSite.setPluginEnabled(true);
 
-        YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
-        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
-        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
+        doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(freeStyleBuild);
+        doReturn(youTrackServer).when(issueUpdater).getYouTrackServer(youTrackSite);
+        doReturn(user).when(youTrackServer).login("test","test");
 
-        youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
+        youTrackSCMListener.onChangeLogParsed(freeStyleBuild, listener, changeLogSet);
 
         YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
         List<Command> commands = youTrackCommandAction.getCommands();
@@ -291,6 +312,10 @@ public class YouTrackSCMListenerTest {
         User user = new User();
         user.setUsername("tester");
         user.setLoggedIn(true);
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommandsEnabled(true);
+        youTrackSite.setPluginEnabled(true);
 
         when(freeStyleBuild.getProject()).thenReturn(project);
         when((FreeStyleBuild) freeStyleBuild.getRootBuild()).thenReturn(freeStyleBuild);
@@ -322,27 +347,26 @@ public class YouTrackSCMListenerTest {
         Project project1 = new Project();
         project1.setShortName("TP1");
         projects.add(project1);
+
         when(server.getProjects(user)).thenReturn(projects);
 
         HashSet<MockEntry> scmLogEntries = Sets.newHashSet(new MockEntry("Fixes #TP1-1 Foo"));
 
         when(changeLogSet.iterator()).thenReturn(scmLogEntries.iterator());
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
-        youTrackSite.setCommandsEnabled(true);
-        youTrackSite.setPluginEnabled(true);
         // For the way the tests are mocked, should this be necessary?
         // I don't see YouTrackProjectProperty.getSite getting invoked that should push these through.
         youTrackSite.setPrefixCommandPairs(Lists.newArrayList(new PrefixCommandPair("Fixes", "Fix"), new PrefixCommandPair("Fixed", "Fix")));
 
-
-        YouTrackServer youTrackServer = mock(YouTrackServer.class);
-
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
-        doReturn(youTrackSite).when(youTrackSCMListener).getYouTrackSite(freeStyleBuild);
-        doReturn(youTrackServer).when(youTrackSCMListener).getYouTrackServer(youTrackSite);
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
+        doReturn(user).when(server).login("test","test");
 
-        youTrackSCMListener.performActions(freeStyleBuild, listener, youTrackSite, changeLogSet.iterator(), server, user);
+        doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(freeStyleBuild);
+        doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
+
+        youTrackSCMListener.onChangeLogParsed(freeStyleBuild, listener, changeLogSet);
 
         YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
         List<Command> commands = youTrackCommandAction.getCommands();
