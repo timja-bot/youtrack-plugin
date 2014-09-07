@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import hudson.model.*;
 import hudson.scm.ChangeLogSet;
+import hudson.tasks.Publisher;
+import hudson.util.DescribableList;
 import junit.framework.Assert;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
@@ -25,7 +27,9 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -123,6 +127,7 @@ public class YouTrackSCMListenerTest {
     public void testSingleLinkPerBuild() throws Exception {
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
         YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
+        FreeStyleProject project = mock(FreeStyleProject.class);
         FreeStyleBuild build = mock(FreeStyleBuild.class);
         BuildListener listener = mock(BuildListener.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
@@ -141,6 +146,7 @@ public class YouTrackSCMListenerTest {
         doReturn(build).when(build).getRootBuild();
         doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
         doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn(project).when(build).getProject();
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
         doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
         doReturn(user).when(server).login("test","test");
@@ -178,8 +184,10 @@ public class YouTrackSCMListenerTest {
 
         YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
         FreeStyleBuild build = mock(FreeStyleBuild.class);
+        FreeStyleProject project = mock(FreeStyleProject.class);
         BuildListener listener = mock(BuildListener.class);
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+
         YouTrackServer server = mock(YouTrackServer.class);
 
         User user = new User();
@@ -199,6 +207,7 @@ public class YouTrackSCMListenerTest {
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
         doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
         doReturn(user).when(server).login("test","test");
+        doReturn(project).when(build).getProject();
 
 
         final List<Command> commentCommands = new ArrayList<Command>();
@@ -218,9 +227,6 @@ public class YouTrackSCMListenerTest {
                 return command;
             }
         }).when(server).comment(anyString(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
-
-
-
 
         youTrackSCMListener.onChangeLogParsed(build, listener, changeLogSet);
 
@@ -373,7 +379,33 @@ public class YouTrackSCMListenerTest {
         assertEquals(2, commands.size());
     }
 
-    YouTrackProjectProperty getProjectProperty() {
-        return new YouTrackProjectProperty("testsite", true, false, true, false, false, null, null, null, false, false, null, false, null, "Fixes,Fixed", "Fix");
+    @Test
+    public void testDoNotRunIfRecorderIsAdded() throws Exception {
+        FreeStyleProject project = mock(FreeStyleProject.class);
+        AbstractBuild build = mock(AbstractBuild.class);
+        BuildListener listener = mock(BuildListener.class);
+        ChangeLogSet logSet = mock(ChangeLogSet.class);
+
+
+
+        YoutrackIssueUpdater issueUpdater = mock(YoutrackIssueUpdater.class);
+        YoutrackUpdateIssuesRecorder issuesRecorder = new YoutrackUpdateIssuesRecorder();
+        YouTrackSCMListener scmListener = spy(new YouTrackSCMListener());
+
+        DescribableList<Publisher,Descriptor<Publisher>> publishers = new DescribableList<Publisher, Descriptor<Publisher>>(project);
+        publishers.add(issuesRecorder);
+
+        doReturn(issueUpdater).when(scmListener).getYoutrackIssueUpdater();
+        doReturn(project).when(build).getProject();
+        doReturn(build).when(build).getRootBuild();
+
+
+        doReturn(publishers).when(project).getPublishersList();
+
+        scmListener.onChangeLogParsed(build, listener,logSet );
+
+        verify(issueUpdater, times(0)).update(Matchers.<AbstractBuild>any(), Matchers.<BuildListener>any(), Matchers.<ChangeLogSet>any());
+
     }
+
 }

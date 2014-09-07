@@ -2,27 +2,34 @@ package org.jenkinsci.plugins.youtrack;
 
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
-import hudson.tasks.Mailer;
-import lombok.Data;
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.youtrack.youtrackapi.*;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
+import hudson.util.DescribableList;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 public class YouTrackSCMListener extends SCMListener {
 
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
         if (build.getRootBuild().equals(build)) {
-
-            YoutrackIssueUpdater youtrackIssueUpdater = getYoutrackIssueUpdater();
-            youtrackIssueUpdater.update(build, listener, changeLogSet);
+            DescribableList<Publisher, Descriptor<Publisher>> publishersList = build.getProject().getPublishersList();
+            boolean hasRecorder = false;
+            if (publishersList != null) {
+                for (Publisher publisher : publishersList) {
+                    if (publisher instanceof YoutrackUpdateIssuesRecorder) {
+                        hasRecorder = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasRecorder) {
+                YoutrackIssueUpdater youtrackIssueUpdater = getYoutrackIssueUpdater();
+                youtrackIssueUpdater.update(build, listener, changeLogSet);
+            }
         }
     }
 
