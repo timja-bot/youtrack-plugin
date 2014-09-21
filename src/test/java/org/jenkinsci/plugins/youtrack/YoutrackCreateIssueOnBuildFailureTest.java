@@ -6,11 +6,13 @@ import hudson.model.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -156,7 +158,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(), null);
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Matchers.<File>any());
 
         User user = new User();
         user.setLoggedIn(true);
@@ -211,7 +213,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(), null);
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Matchers.<File>any());
 
         User user = new User();
         user.setLoggedIn(true);
@@ -271,7 +273,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), null);
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Matchers.<File>any());
 
         User user = new User();
         user.setLoggedIn(true);
