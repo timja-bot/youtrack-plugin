@@ -29,7 +29,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         BuildListener buildListener = mock(BuildListener.class);
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null, false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -51,7 +51,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         BuildListener buildListener = mock(BuildListener.class);
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null,false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -74,7 +74,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         BuildListener buildListener = mock(BuildListener.class);
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null,false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -98,7 +98,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         BuildListener buildListener = mock(BuildListener.class);
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -125,7 +125,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -176,7 +176,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("project", "${VAR1}", "${VAR2}", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, "${VAR3}"));
+                spy(new YoutrackCreateIssueOnBuildFailure("project", "${VAR1}", "${VAR2}", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, "${VAR3}",false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
@@ -235,7 +235,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         BuildListener buildListener = mock(BuildListener.class);
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
-                spy(new YoutrackCreateIssueOnBuildFailure("project", "", "", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null));
+                spy(new YoutrackCreateIssueOnBuildFailure("project", "", "", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
 
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
