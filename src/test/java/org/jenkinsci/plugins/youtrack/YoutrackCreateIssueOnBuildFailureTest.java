@@ -156,7 +156,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(), null);
 
         User user = new User();
         user.setLoggedIn(true);
@@ -211,7 +211,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString());
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(),Mockito.any(User.class),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(),Mockito.anyString(), null);
 
         User user = new User();
         user.setLoggedIn(true);
@@ -271,7 +271,7 @@ public class YoutrackCreateIssueOnBuildFailureTest {
                 return issuedCommand;
             }
         };
-        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        doAnswer(answer).when(server).createIssue(Mockito.anyString(), Mockito.any(User.class), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), null);
 
         User user = new User();
         user.setLoggedIn(true);
