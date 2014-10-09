@@ -364,7 +364,7 @@ public class YoutrackIssueUpdater {
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
                 String shortName = project1.getShortName();
-                Pattern projectPattern = Pattern.compile("^(" + shortName + "-" + "(\\d+)" + ")|\\W(" + shortName + "-" + "(\\d+))" );
+                Pattern projectPattern = Pattern.compile("^(" + shortName + "-" + "(\\d+)" + ")|\\W(" + shortName + "-" + "(\\d+))");
                 Matcher matcher = projectPattern.matcher(msg);
                 while (matcher.find()) {
                     if (matcher.groupCount() >= 1) {
