@@ -39,8 +39,14 @@ public class YouTrackSCMListenerTest {
     private static class MockEntry extends ChangeLogSet.Entry {
 
         private final String msg;
+        private String commitId;
 
         public MockEntry(String msg) {
+            this.msg = msg;
+        }
+
+        public MockEntry(String msg, String commitId) {
+            this.commitId = commitId;
             this.msg = msg;
         }
 
@@ -57,6 +63,12 @@ public class YouTrackSCMListenerTest {
         @Override
         public String getMsg() {
             return this.msg;
+        }
+
+
+        @Override
+        public String getCommitId() {
+            return commitId;
         }
     }
 
@@ -122,6 +134,51 @@ public class YouTrackSCMListenerTest {
         assertEquals(1, commands.size());
     }
 
+    @Test
+    public void testOverlappingProjects() throws Exception {
+        YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
+        FreeStyleProject project = mock(FreeStyleProject.class);
+        FreeStyleBuild build = mock(FreeStyleBuild.class);
+        BuildListener listener = mock(BuildListener.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+        MockEntry entry1 = new MockEntry("Work done on !PYAT-1", "abc");
+        MockEntry entry2 = new MockEntry("PYAT-2 bla bla bla", "abc");
+        MockEntry entry3 = new MockEntry("Af dafdsa f PYAT-3 bla bla bla", "abc");
+
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setPluginEnabled(true);
+        youTrackSite.setCommentEnabled(true);
+
+
+        doReturn(Lists.newArrayList(new Project("AT"), new Project("PYAT"))).when(server).getProjects(user);
+
+
+        doReturn(Lists.newArrayList(entry1,entry2,entry3).iterator()).when(changeLogSet).iterator();
+        doReturn(build).when(build).getRootBuild();
+        doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
+        doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
+        doReturn(project).when(build).getProject();
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
+        doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
+        doReturn(user).when(server).login("test","test");
+        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+
+
+        youTrackSCMListener.onChangeLogParsed(build, listener, changeLogSet);
+
+        verify(server, times(1)).comment("testsite", user, new Issue("PYAT-1"), "Related build: http://test.com/buildurl\nSHA: abc", null, false);
+        verify(server, times(1)).comment("testsite", user, new Issue("PYAT-2"), "Related build: http://test.com/buildurl\nSHA: abc", null, false);
+        verify(server, times(1)).comment("testsite", user, new Issue("PYAT-3"), "Related build: http://test.com/buildurl\nSHA: abc", null, false);
+
+        verify(server, times(3)).comment(Matchers.<String>any(), Matchers.<User>any(), Matchers.<Issue>any(), anyString(), anyString(), anyBoolean());
+    }
 
     @Test
     public void testSingleLinkPerBuild() throws Exception {

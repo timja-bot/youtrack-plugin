@@ -364,11 +364,15 @@ public class YoutrackIssueUpdater {
         if (youTrackSite.isCommentEnabled()) {
             for (Project project1 : projects) {
                 String shortName = project1.getShortName();
-                Pattern projectPattern = Pattern.compile("(" + shortName + "-" + "(\\d+)" + ")");
+                Pattern projectPattern = Pattern.compile("^(" + shortName + "-" + "(\\d+)" + ")|\\W(" + shortName + "-" + "(\\d+))" );
                 Matcher matcher = projectPattern.matcher(msg);
                 while (matcher.find()) {
                     if (matcher.groupCount() >= 1) {
-                        String issueId = shortName + "-" + matcher.group(2);
+                        String id = matcher.group(2);
+                        if (id == null) {
+                            id = matcher.group(4);
+                        }
+                        String issueId = shortName + "-" + id;
                         String commentText = "Related build: " + getAbsoluteUrlForBuild(build) + "\nSHA: " + commitId;
                         Command comment = null;
                         if (!commentedIssueIds.contains(issueId)) {
