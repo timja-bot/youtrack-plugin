@@ -3,25 +3,29 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.BuildListener;
+import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import hudson.tasks.Publisher;
-import hudson.util.FormValidation;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.plugins.youtrack.youtrackapi.*;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
+import org.apache.log4j.Logger;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Suggestion;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
+import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +37,8 @@ import java.util.regex.Pattern;
  * This is command for executing arbitrary commands on issues.
  */
 public class ExecuteCommandAction extends Builder {
+    private static final Logger LOGGER = Logger.getLogger(ExecuteCommandAction.class.getName());
+
     @Getter @Setter private String command;
     @Getter @Setter private String search;
     @Getter @Setter private String issueInText;
@@ -51,9 +57,21 @@ public class ExecuteCommandAction extends Builder {
         YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite != null) {
             if (youTrackSite.isPluginEnabled()) {
+
                 EnvVars environment = build.getEnvironment(listener);
+
+                try {
+                    String changes = createChangesString(build);
+                    environment.put("YOUTRACK_CHANGES", changes);
+                } catch (InvocationTargetException e) {
+                    LOGGER.error(e);
+                } catch (IllegalAccessException e) {
+                    LOGGER.error(e);
+                }
+
                 String searchQuery = environment.expand(search);
                 String commandToExecute = environment.expand(command);
+                String expandedIssueInText = environment.expand(issueInText);
 
                 YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
@@ -62,8 +80,8 @@ public class ExecuteCommandAction extends Builder {
                     if (StringUtils.isNotBlank(searchQuery)) {
                         issues.addAll(youTrackServer.search(user, searchQuery));
                     }
-                    if (StringUtils.isNotBlank(issueInText)) {
-                        issues.addAll(findIssuesInText(build, environment, issueInText));
+                    if (StringUtils.isNotBlank(expandedIssueInText)) {
+                        issues.addAll(findIssuesInText(build, environment, expandedIssueInText));
                     }
                     List<Command> appliedCommands = new ArrayList<Command>();
                     String expandedComment = environment.expand(comment);
@@ -94,6 +112,17 @@ public class ExecuteCommandAction extends Builder {
             listener.getLogger().println("No site configured");
         }
         return true;
+    }
+
+    String createChangesString(AbstractBuild<?, ?> build) throws InvocationTargetException, IllegalAccessException {
+        StringBuilder stringBuilder = new StringBuilder();
+        ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+        for (ChangeLogSet.Entry entry : changeSet) {
+            String message = YoutrackIssueUpdater.getMessage(entry);
+            stringBuilder.append(entry.getMsg());
+            stringBuilder.append("\n\n");
+        }
+        return stringBuilder.toString();
     }
 
     YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {

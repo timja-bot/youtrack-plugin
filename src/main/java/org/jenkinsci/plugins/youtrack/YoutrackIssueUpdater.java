@@ -124,20 +124,7 @@ public class YoutrackIssueUpdater {
             ChangeLogSet.Entry next = changeLogIterator.next();
 
             String msg;
-            if (next.getClass().getCanonicalName().equals("hudson.plugins.git.GitChangeSet")) {
-
-                try {
-                    Method getComment = next.getClass().getMethod("getComment");
-                    Object message = getComment.invoke(next);
-                    msg = (String) message;
-                } catch (NoSuchMethodException e) {
-                    msg = next.getMsg();
-                } catch (SecurityException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                msg = next.getMsg();
-            }
+            msg = getMessage(next);
 
             List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, next.getCommitId(), listener, commentedIssueIds);
             for (Command command : commands) {
@@ -186,6 +173,25 @@ public class YoutrackIssueUpdater {
         }
 
         build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
+    }
+
+    public static String getMessage(ChangeLogSet.Entry next) throws IllegalAccessException, InvocationTargetException {
+        String msg;
+        if (next.getClass().getCanonicalName().equals("hudson.plugins.git.GitChangeSet")) {
+
+            try {
+                Method getComment = next.getClass().getMethod("getComment");
+                Object message = getComment.invoke(next);
+                msg = (String) message;
+            } catch (NoSuchMethodException e) {
+                msg = next.getMsg();
+            } catch (SecurityException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            msg = next.getMsg();
+        }
+        return msg;
     }
 
 

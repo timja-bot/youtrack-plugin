@@ -6,37 +6,30 @@ import hudson.model.*;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Publisher;
 import hudson.util.DescribableList;
-import junit.framework.Assert;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.jvnet.hudson.test.FakeChangeLogSCM;
-import org.mockito.Answers;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mockito.stubbing.Stubber;
 
-import static junit.framework.Assert.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.*;
+
+import static junit.framework.Assert.assertEquals;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 
 /**
  * Test the SCM listener.
  */
 public class YouTrackSCMListenerTest {
-    private static class MockEntry extends ChangeLogSet.Entry {
+    public static class MockEntry extends ChangeLogSet.Entry {
 
         private final String msg;
         private String commitId;

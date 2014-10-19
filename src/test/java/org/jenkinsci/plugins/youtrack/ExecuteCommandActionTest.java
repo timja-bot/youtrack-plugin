@@ -1,32 +1,26 @@
 package org.jenkinsci.plugins.youtrack;
 
 import com.google.common.collect.Lists;
-import com.google.inject.matcher.Matchers;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.FreeStyleBuild;
-import org.apache.maven.model.Build;
-import org.hamcrest.core.Is;
+import hudson.scm.ChangeLogSet;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import static org.hamcrest.core.Is.*;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class ExecuteCommandActionTest {
@@ -167,6 +161,45 @@ public class ExecuteCommandActionTest {
 
         assertThat(perform, is(true));
         verify(server, times(1)).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", null, true);
+    }
+
+    @Test
+    public void testIssueTextCommandEnv() throws IOException, InterruptedException {
+        AbstractBuild build = mock(FreeStyleBuild.class);
+        Launcher launcher = mock(Launcher.class);
+        BuildListener listener = mock(BuildListener.class);
+        YouTrackServer server = mock(YouTrackServer.class);
+        ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
+
+
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "${YOUTRACK_CHANGES}", "This is fixed"));
+
+        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        site.setPluginEnabled(true);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream loggerStream = new PrintStream(outputStream);
+        EnvVars envVars = new EnvVars();
+
+        doReturn(loggerStream).when(listener).getLogger();
+        doReturn(changeLogSet).when(build).getChangeSet();
+        doReturn(site).when(commandAction).getYouTrackSite(build);
+        doReturn(server).when(commandAction).getYouTrackServer(site);
+        doReturn(Lists.newArrayList(new YouTrackSCMListenerTest.MockEntry("#XYZ-123 Fixed\nbla bla bla")).iterator()).when(changeLogSet).iterator();
+        doReturn(envVars).when(build).getEnvironment(listener);
+
+
+        YouTrackSaveProjectShortNamesAction projectShortNamesAction = new YouTrackSaveProjectShortNamesAction(Lists.newArrayList(new Project("XYZ")));
+        doReturn(projectShortNamesAction).when(build).getAction(YouTrackSaveProjectShortNamesAction.class);
+
+        User user = new User();
+        user.setLoggedIn(true);
+        doReturn(user).when(server).login("test", "test");
+
+        boolean perform = commandAction.perform(build, launcher, listener);
+
+        assertThat(perform, is(true));
+        verify(server, times(1)).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", null, true);
     }
 
     @Test
