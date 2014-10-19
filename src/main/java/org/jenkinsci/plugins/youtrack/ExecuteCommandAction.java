@@ -58,24 +58,24 @@ public class ExecuteCommandAction extends Builder {
         if (youTrackSite != null) {
             if (youTrackSite.isPluginEnabled()) {
 
-                EnvVars environment = build.getEnvironment(listener);
-
-                try {
-                    String changes = createChangesString(build);
-                    environment.put("YOUTRACK_CHANGES", changes);
-                } catch (InvocationTargetException e) {
-                    LOGGER.error(e);
-                } catch (IllegalAccessException e) {
-                    LOGGER.error(e);
-                }
-
-                String searchQuery = environment.expand(search);
-                String commandToExecute = environment.expand(command);
-                String expandedIssueInText = environment.expand(issueInText);
-
                 YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
                 User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
                 if (user != null && user.isLoggedIn()) {
+                    EnvVars environment = build.getEnvironment(listener);
+
+                    try {
+                        String changes = createChangesString(build);
+                        environment.put("YOUTRACK_CHANGES", changes);
+                    } catch (InvocationTargetException e) {
+                        LOGGER.error(e);
+                    } catch (IllegalAccessException e) {
+                        LOGGER.error(e);
+                    }
+
+                    String searchQuery = environment.expand(search);
+                    String commandToExecute = environment.expand(command);
+                    String expandedIssueInText = environment.expand(issueInText);
+
                     Set<Issue> issues = new HashSet<Issue>();
                     if (StringUtils.isNotBlank(searchQuery)) {
                         issues.addAll(youTrackServer.search(user, searchQuery));
@@ -117,10 +117,12 @@ public class ExecuteCommandAction extends Builder {
     String createChangesString(AbstractBuild<?, ?> build) throws InvocationTargetException, IllegalAccessException {
         StringBuilder stringBuilder = new StringBuilder();
         ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
-        for (ChangeLogSet.Entry entry : changeSet) {
-            String message = YoutrackIssueUpdater.getMessage(entry);
-            stringBuilder.append(entry.getMsg());
-            stringBuilder.append("\n\n");
+        if (changeSet != null) {
+            for (ChangeLogSet.Entry entry : changeSet) {
+                String message = YoutrackIssueUpdater.getMessage(entry);
+                stringBuilder.append(entry.getMsg());
+                stringBuilder.append("\n\n");
+            }
         }
         return stringBuilder.toString();
     }
