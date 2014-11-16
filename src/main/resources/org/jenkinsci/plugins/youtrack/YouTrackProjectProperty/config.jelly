@@ -36,6 +36,10 @@
                         <f:checkbox name="youtrack.commentsEnabled"/>
                     </f:entry>
 
+                    <f:entry title="${%backlinks.commentText}" field="commentText">
+                        <f:textarea name="youtrack.commentText"/>
+                    </f:entry>
+
                     <f:entry title="${%backlinks.visibility}" field="linkVisibility">
                         <f:textbox name="youtrack.linkVisibility"/>
                     </f:entry>

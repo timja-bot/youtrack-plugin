@@ -1,16 +1,26 @@
 package org.jenkinsci.plugins.youtrack;
 
+import com.google.common.collect.ArrayListMultimap;
+import groovy.lang.Writable;
+import groovy.text.SimpleTemplateEngine;
+import groovy.text.Template;
+import groovy.text.TemplateEngine;
+import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.Mailer;
 import jenkins.model.Jenkins;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -20,6 +30,9 @@ import java.util.regex.Pattern;
 
 public class YoutrackIssueUpdater {
 
+    private static final Logger LOGGER = Logger.getLogger(YoutrackIssueUpdater.class.getName());
+
+
     @Data
     private static class Pair<T, U> {
         private final T first;
@@ -28,6 +41,7 @@ public class YoutrackIssueUpdater {
 
     /**
      * Converts list of commands to map.
+     *
      * @param youTrackSite site to convert for.
      * @return map from prefix to command.
      */
@@ -117,19 +131,33 @@ public class YoutrackIssueUpdater {
         YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
 
         List<Issue> fixedIssues = new ArrayList<Issue>();
-        //This is the set of issue ids for which the related build command has already been added
-        Set<String> commentedIssueIds = new HashSet<String>();
+
+        if (youTrackSite.isCommentEnabled()) {
+            ArrayListMultimap<Issue, ChangeLogSet.Entry> relatedChanges = ArrayListMultimap.create();
+            while (changeLogIterator.hasNext()) {
+                ChangeLogSet.Entry next = changeLogIterator.next();
+                String msg = getMessage(next);
+
+                List<Issue> issuesFromCommit = findIssuesFromCommit(msg, projects);
+                for (Issue issue : issuesFromCommit) {
+                    relatedChanges.put(issue, next);
+                }
+            }
+
+            for (Issue relatedIssue : relatedChanges.keySet()) {
+                List<ChangeLogSet.Entry> entries = relatedChanges.get(relatedIssue);
+                List<Command> commands = addComment(build, youTrackSite, youTrackServer, user, relatedIssue, entries, listener);
+                for (Command command : commands) {
+                    commandAction.addCommand(command);
+                }
+            }
+        }
+
 
         while (changeLogIterator.hasNext()) {
             ChangeLogSet.Entry next = changeLogIterator.next();
 
-            String msg;
-            msg = getMessage(next);
-
-            List<Command> commands = addCommentIfEnabled(build, youTrackSite, youTrackServer, user, projects, msg, next.getCommitId(), listener, commentedIssueIds);
-            for (Command command : commands) {
-                commandAction.addCommand(command);
-            }
+            String msg = getMessage(next);
 
 
             if (projects != null) {
@@ -174,6 +202,7 @@ public class YoutrackIssueUpdater {
 
         build.addAction(new YouTrackSaveFixedIssues(fixedIssues));
     }
+
 
     public static String getMessage(ChangeLogSet.Entry next) throws IllegalAccessException, InvocationTargetException {
         String msg;
@@ -365,40 +394,71 @@ public class YoutrackIssueUpdater {
         }
     }
 
-    private List<Command> addCommentIfEnabled(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, String msg, String commitId, BuildListener listener, Set<String> commentedIssueIds) {
-        List<Command> commands = new ArrayList<Command>();
-        if (youTrackSite.isCommentEnabled()) {
-            for (Project project1 : projects) {
-                String shortName = project1.getShortName();
-                Pattern projectPattern = Pattern.compile("^(" + shortName + "-" + "(\\d+)" + ")|\\W(" + shortName + "-" + "(\\d+))");
-                Matcher matcher = projectPattern.matcher(msg);
-                while (matcher.find()) {
-                    if (matcher.groupCount() >= 1) {
-                        String id = matcher.group(2);
-                        if (id == null) {
-                            id = matcher.group(4);
-                        }
-                        String issueId = shortName + "-" + id;
-                        String commentText = "Related build: " + getAbsoluteUrlForBuild(build) + "\nSHA: " + commitId;
-                        Command comment = null;
-                        if (!commentedIssueIds.contains(issueId)) {
-                            comment = youTrackServer.comment(youTrackSite.getName(), user, new Issue(issueId), commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
-                        }
-                        if (comment != null) {
-                            commands.add(comment);
-                            if (comment.getStatus() == Command.Status.OK) {
-                                if (!commentedIssueIds.contains(issueId)) {
-                                    commentedIssueIds.add(issueId);
-                                    listener.getLogger().println("Commented on " + issueId);
-                                }
-                            } else {
-                                listener.getLogger().println("FAILED: Commented on " + issueId);
-                            }
-                        }
+    private List<Issue> findIssuesFromCommit(String msg, List<Project> projects) {
+        List<Issue> issues = new ArrayList<Issue>();
+        for (Project project1 : projects) {
+            String shortName = project1.getShortName();
+            Pattern projectPattern = Pattern.compile("^(" + shortName + "-" + "(\\d+)" + ")|\\W(" + shortName + "-" + "(\\d+))");
+            Matcher matcher = projectPattern.matcher(msg);
+            while (matcher.find()) {
+                if (matcher.groupCount() >= 1) {
+                    String id = matcher.group(2);
+                    if (id == null) {
+                        id = matcher.group(4);
                     }
+
+
+                    String issueId = shortName + "-" + id;
+                    issues.add(new Issue(issueId));
                 }
             }
         }
+        return issues;
+    }
+
+    private List<Command> addComment(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, Issue relatedIssue, List<ChangeLogSet.Entry> entries, BuildListener listener) {
+        List<Command> commands = new ArrayList<Command>();
+
+        String commentText = youTrackSite.getCommentText();
+        if (StringUtils.isBlank(commentText)) {
+            StringBuilder stringBuilder = new StringBuilder("Related build: " + getAbsoluteUrlForBuild(build));
+            for (ChangeLogSet.Entry entry : entries) {
+                stringBuilder.append("\nSHA: ").append(entry.getCommitId());
+            };
+            commentText = stringBuilder.toString();
+        } else {
+            try {
+                EnvVars environment = build.getEnvironment(listener);
+                commentText = environment.expand(commentText);
+                Map<String, Object> env = new HashMap<String, Object>();
+                env.put("build", build);
+                env.put("entries", entries);
+
+                TemplateEngine templateEngine = new SimpleTemplateEngine();
+                Template template = templateEngine.createTemplate(commentText);
+                Writable make = template.make(env);
+                StringWriter out = new StringWriter();
+                make.writeTo(out);
+                commentText = out.toString();
+            } catch (IOException e) {
+                LOGGER.error(e);
+            } catch (ClassNotFoundException e) {
+                LOGGER.error(e);
+            } catch (InterruptedException e) {
+                LOGGER.error(e);
+            }
+        }
+        Command comment;
+        comment = youTrackServer.comment(youTrackSite.getName(), user, relatedIssue, commentText, youTrackSite.getLinkVisibility(), youTrackSite.isSilentLinks());
+        if (comment != null) {
+            commands.add(comment);
+            if (comment.getStatus() == Command.Status.OK) {
+                listener.getLogger().println("Commented on " + relatedIssue.getId());
+            } else {
+                listener.getLogger().println("FAILED: Commented on " + relatedIssue.getId());
+            }
+        }
+
         return commands;
     }
 

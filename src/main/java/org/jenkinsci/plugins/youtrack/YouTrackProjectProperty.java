@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.Extension;
 import hudson.model.*;
 import hudson.util.CopyOnWriteList;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +37,10 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * If ping back comments is enabled.
      */
     @Getter @Setter private boolean commentsEnabled;
+    /**
+     * The text to use for ping back comments
+     */
+    @Getter @Setter private String commentText;
     /**
      * If executing commands is enabled.
      */
@@ -94,7 +97,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String prefixes, String prefixCommand) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String commentText) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -109,6 +112,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.executeProjectLimits = executeProjectLimits;
         this.trackCommits = trackCommits;
         this.project = project;
+        this.commentText = commentText;
         this.prefixCommandPairs = new ArrayList<PrefixCommandPair>();
     }
 
@@ -338,6 +342,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setTrackCommits(trackCommits);
             result.setProject(project);
             result.setPrefixCommandPairs(prefixCommandPairs);
+            result.setCommentText(commentText);
         }
         return result;
     }

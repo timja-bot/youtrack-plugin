@@ -16,6 +16,7 @@ public class YouTrackSite {
     @Getter @Setter private transient boolean runAsEnabled;
     @Getter @Setter private transient boolean commandsEnabled;
     @Getter @Setter private transient boolean commentEnabled;
+    @Getter @Setter private transient String commentText;
     @Getter @Setter private transient boolean annotationsEnabled;
     @Getter @Setter private transient String linkVisibility;
     @Getter @Setter private transient String stateFieldName;
