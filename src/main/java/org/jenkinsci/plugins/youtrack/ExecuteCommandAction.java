@@ -147,11 +147,11 @@ public class ExecuteCommandAction extends Builder {
     private List<Issue> findIssuesIds(List<String> projects, String issueText) {
         ArrayList<Issue> issues = new ArrayList<Issue>();
         String projectIds = StringUtils.join(projects, "|");
-        Pattern projectPattern = Pattern.compile("(" + projectIds + "-" + "(\\d+)" + ")");
+        Pattern projectPattern = Pattern.compile("((" + projectIds + ")-" + "(\\d+)" + ")");
         Matcher matcher = projectPattern.matcher(issueText);
         while (matcher.find()) {
             if (matcher.groupCount() >= 1) {
-                String issueId = matcher.group(1);
+                String issueId = matcher.group(0);
                 issues.add(new Issue(issueId));
             }
         }

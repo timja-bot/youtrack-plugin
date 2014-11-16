@@ -189,7 +189,7 @@ public class ExecuteCommandActionTest {
         doReturn(envVars).when(build).getEnvironment(listener);
 
 
-        YouTrackSaveProjectShortNamesAction projectShortNamesAction = new YouTrackSaveProjectShortNamesAction(Lists.newArrayList(new Project("XYZ")));
+        YouTrackSaveProjectShortNamesAction projectShortNamesAction = new YouTrackSaveProjectShortNamesAction(Lists.newArrayList(new Project("XYZ"), new Project("ABC")));
         doReturn(projectShortNamesAction).when(build).getAction(YouTrackSaveProjectShortNamesAction.class);
 
         User user = new User();
@@ -242,5 +242,7 @@ public class ExecuteCommandActionTest {
         verify(build, times(1)).addAction(any(Action.class));
 
     }
+
+
 
 }

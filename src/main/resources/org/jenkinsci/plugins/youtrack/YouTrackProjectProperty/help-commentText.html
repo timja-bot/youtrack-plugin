@@ -1,0 +1,15 @@
+<p>Enabling makes it possible to execute commands from the VCS commit message. It is inspired by how YouTrack integrates
+    with TeamCity, as described
+    <a target="_blank"
+       href="http://confluence.jetbrains.com/display/YTD4/Executing+Commands+from+Comment+to+VCS+Commit">here</a>. It
+    does however not support batch commands.
+</p>
+
+<p>In short after <code>#issue-id</code> the rest of the line is interpreted as a command an sent to YouTrack. If the
+    next line does
+    not contain a # it will be considered as a comment to the command
+    applied.
+</p>
+
+<p>An extra option in this integration is to write <code>!#issue-id command</code> and the command will be applied, but
+    silently, that is, watchers of the issue will not be notified.</p>
