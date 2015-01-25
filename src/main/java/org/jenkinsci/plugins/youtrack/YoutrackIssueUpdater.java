@@ -378,7 +378,7 @@ public class YoutrackIssueUpdater {
         //state can be affected by something else than the command.
         Issue before = youTrackServer.getIssue(user, issueId, stateFieldName);
         boolean isSilent = youTrackSite.isSilentCommands() || silent;
-        Command cmd = youTrackServer.applyCommand(youTrackSite.getName(), user, new Issue(issueId), command, comment, userByEmail, !isSilent);
+        Command cmd = youTrackServer.applyCommand(youTrackSite.getName(), user, new Issue(issueId), command, comment, null, userByEmail, !isSilent);
         if (cmd.getStatus() == Command.Status.OK) {
             listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
         } else {

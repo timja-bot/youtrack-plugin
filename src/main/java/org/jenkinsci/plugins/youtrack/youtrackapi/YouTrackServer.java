@@ -1,16 +1,14 @@
 package org.jenkinsci.plugins.youtrack.youtrackapi;
 
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.FilePart;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.jenkinsci.plugins.youtrack.Command;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.youtrack.Command;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -93,7 +91,7 @@ public class YouTrackServer {
 
         cmd.setStatus(Command.Status.FAILED);
         try {
-            String params = "project="+URLEncoder.encode(project, "UTF-8")+"&summary="+URLEncoder.encode(title, "UTF-8")+"&description=" + URLEncoder.encode(description, "UTF-8");
+            String params = "project=" + URLEncoder.encode(project, "UTF-8") + "&summary=" + URLEncoder.encode(title, "UTF-8") + "&description=" + URLEncoder.encode(description, "UTF-8");
 
             // Against documentation. This call is supposed to be PUT, but only POST is working.
             PostMethod postMethod = new PostMethod(serverUrl + "/rest/issue");
@@ -106,7 +104,7 @@ public class YouTrackServer {
             parts.add(new StringPart("project", project, "UTF-8"));
             parts.add(new StringPart("summary", title, "UTF-8"));
             parts.add(new StringPart("description", description, "UTF-8"));
-            if(attachment != null) {
+            if (attachment != null) {
                 parts.add(new FilePart("attachment", attachment));
             }
             Part[] partsArray = {};
@@ -120,7 +118,7 @@ public class YouTrackServer {
             if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream()));
                 StringBuilder stringBuilder = new StringBuilder();
-                for (String l = null; (l = bufferedReader.readLine()) != null;) {
+                for (String l = null; (l = bufferedReader.readLine()) != null; ) {
                     stringBuilder.append(l).append("\n");
                 }
 
@@ -136,7 +134,7 @@ public class YouTrackServer {
                     if (issueId != null) {
                         Issue issue = new Issue(issueId);
                         if (StringUtils.isNotBlank(command)) {
-                            applyCommand(siteName, user, issue, command, "", null, false);
+                            applyCommand(siteName, user, issue, command, "", null, null, false);
                             cmd.setCommand(command);
                         }
                         cmd.setIssueId(issueId);
@@ -421,10 +419,11 @@ public class YouTrackServer {
      * @param issue   the issue to apply the command to.
      * @param command the command to apply.
      * @param comment comment with the command, null is allowed.
+     * @param group   the visibility group for the command.
      * @param runAs   user to apply the command as, null is allowed.
      * @param notify  notifies watchers.
      */
-    public Command applyCommand(String siteName, User user, Issue issue, String command, String comment, User runAs, boolean notify) {
+    public Command applyCommand(String siteName, User user, Issue issue, String command, String comment, String group, User runAs, boolean notify) {
         Command cmd = new Command();
         cmd.setCommand(command);
         cmd.setSilent(!notify);
@@ -463,6 +462,9 @@ public class YouTrackServer {
             }
             if (!notify) {
                 str += "&disableNotifications=true";
+            }
+            if (group != null) {
+                str += "&group=" + URLEncoder.encode(group, "UTF-8");
             }
             outputStreamWriter.write(str);
             outputStreamWriter.flush();

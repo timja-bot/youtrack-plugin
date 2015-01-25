@@ -237,21 +237,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteLinkVisibility(@AncestorInPath AbstractProject project, @QueryParameter String value) {
-            YouTrackSite youTrackSite = YouTrackSite.get(project);
-            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if (youTrackSite != null) {
-                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if (user != null) {
-                    List<Group> groups = youTrackServer.getGroups(user);
-                    for (Group group : groups) {
-                        if (group.getName().toLowerCase().contains(value.toLowerCase())) {
-                            autoCompletionCandidates.add(group.getName());
-                        }
-                    }
-                }
-            }
-            return autoCompletionCandidates;
+            return getPossibleGroups(project, value);
         }
 
         @SuppressWarnings("UnusedDeclaration")
@@ -312,6 +298,24 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             }
             return autoCompletionCandidates;
         }
+    }
+
+    public static AutoCompletionCandidates getPossibleGroups(AbstractProject project, String value) {
+        YouTrackSite youTrackSite = YouTrackSite.get(project);
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        if (youTrackSite != null) {
+            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            if (user != null) {
+                List<Group> groups = youTrackServer.getGroups(user);
+                for (Group group : groups) {
+                    if (group.getName().toLowerCase().contains(value.toLowerCase())) {
+                        autoCompletionCandidates.add(group.getName());
+                    }
+                }
+            }
+        }
+        return autoCompletionCandidates;
     }
 
     public YouTrackSite getSite() {

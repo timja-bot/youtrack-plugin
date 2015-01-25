@@ -31,7 +31,7 @@ public class ExecuteCommandActionTest {
         BuildListener listener = mock(BuildListener.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", ""));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "", ""));
 
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -52,7 +52,7 @@ public class ExecuteCommandActionTest {
         BuildListener listener = mock(BuildListener.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", ""));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         YouTrackServer server = new YouTrackServer("test");
@@ -77,7 +77,7 @@ public class ExecuteCommandActionTest {
         YouTrackServer server = mock(YouTrackServer.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", ""));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         site.setPluginEnabled(true);
@@ -106,7 +106,7 @@ public class ExecuteCommandActionTest {
         YouTrackServer server = mock(YouTrackServer.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", ""));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         site.setPluginEnabled(true);
@@ -137,7 +137,7 @@ public class ExecuteCommandActionTest {
         YouTrackServer server = mock(YouTrackServer.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "branch/hotfix/YT-1", "This is fixed"));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "branch/hotfix/YT-1", "This is fixed",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         site.setPluginEnabled(true);
@@ -160,7 +160,7 @@ public class ExecuteCommandActionTest {
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", null, null, true);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class ExecuteCommandActionTest {
         ChangeLogSet changeLogSet = mock(ChangeLogSet.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "${YOUTRACK_CHANGES}", "This is fixed"));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "${YOUTRACK_CHANGES}", "This is fixed",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         site.setPluginEnabled(true);
@@ -199,7 +199,7 @@ public class ExecuteCommandActionTest {
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", null, null, true);
     }
 
     @Test
@@ -210,7 +210,7 @@ public class ExecuteCommandActionTest {
         YouTrackServer server = mock(YouTrackServer.class);
 
 
-        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Version: 2", "Version: 1", "", "Upgrade versions"));
+        ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Version: 2", "Version: 1", "", "Upgrade versions",""));
 
         YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
         site.setPluginEnabled(true);
@@ -236,8 +236,8 @@ public class ExecuteCommandActionTest {
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-2"), "Version: 2", "Upgrade versions", null, true);
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-3"), "Version: 2", "Upgrade versions", null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-2"), "Version: 2", "Upgrade versions", null, null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-3"), "Version: 2", "Upgrade versions", null, null, true);
 
         verify(build, times(1)).addAction(any(Action.class));
 

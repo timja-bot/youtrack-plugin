@@ -93,7 +93,7 @@ public class YouTrackSCMListenerTest {
         command.setIssueId("TP1-1");
         command.setStatus(Command.Status.OK);
         command.setUsername(user.getUsername());
-        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", null, null, true)).thenReturn(command);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", null, null, null, true)).thenReturn(command);
 
 
         ArrayList<Project> projects = new ArrayList<Project>();
@@ -324,8 +324,8 @@ public class YouTrackSCMListenerTest {
         command2.setIssueId("TP1-1");
         command2.setStatus(Command.Status.OK);
         command2.setUsername(user.getUsername());
-        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, true)).thenReturn(command1);
-        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, true)).thenReturn(command2);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, null, true)).thenReturn(command1);
+        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, null, true)).thenReturn(command2);
 
         ArrayList<Project> projects = new ArrayList<Project>();
         Project project1 = new Project();
@@ -388,7 +388,7 @@ public class YouTrackSCMListenerTest {
         command1.setIssueId("TP1-1");
         command1.setStatus(Command.Status.OK);
         command1.setUsername(user.getUsername());
-        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Foo", null, null, true)).thenReturn(command1);
+        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Foo", null, null, null, true)).thenReturn(command1);
         Command command2 = new Command();
         command2.setDate(new Date());
         command2.setComment(null);
@@ -397,7 +397,7 @@ public class YouTrackSCMListenerTest {
         command2.setIssueId("TP1-1");
         command2.setStatus(Command.Status.OK);
         command2.setUsername(user.getUsername());
-        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fix", null, null, true)).thenReturn(command2);
+        when(server.applyCommand("testsite", user, new Issue("TP1-1"), "Fix", null, null, null, true)).thenReturn(command2);
 
         ArrayList<Project> projects = new ArrayList<Project>();
         Project project1 = new Project();

@@ -43,13 +43,15 @@ public class ExecuteCommandAction extends Builder {
     @Getter @Setter private String search;
     @Getter @Setter private String issueInText;
     @Getter @Setter private String comment;
+    @Getter @Setter private String commentVisibility;
 
     @DataBoundConstructor
-    public ExecuteCommandAction(String command, String search, String issueInText, String comment) {
+    public ExecuteCommandAction(String command, String search, String issueInText, String comment, String commentVisibility) {
         this.command = command;
         this.search = search;
         this.issueInText = issueInText;
         this.comment = comment;
+        this.commentVisibility = commentVisibility;
     }
 
     @Override
@@ -86,7 +88,7 @@ public class ExecuteCommandAction extends Builder {
                     List<Command> appliedCommands = new ArrayList<Command>();
                     String expandedComment = environment.expand(comment);
                     for (Issue issue : issues) {
-                        Command appliedCommand = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandToExecute, expandedComment, null, true);
+                        Command appliedCommand = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandToExecute, expandedComment, commentVisibility, null, true);
                         appliedCommands.add(appliedCommand);
                     }
                     if (!appliedCommands.isEmpty()) {
@@ -210,6 +212,12 @@ public class ExecuteCommandAction extends Builder {
             if (text == null) return "";
             return text;
         }
+
+        @SuppressWarnings("UnusedDeclaration")
+        public AutoCompletionCandidates doAutoCompleteCommentVisibility(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            return YouTrackProjectProperty.getPossibleGroups(project, value);
+        }
+
     }
 
 }

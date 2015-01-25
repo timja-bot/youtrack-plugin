@@ -138,7 +138,7 @@ public class YouTrackBuildUpdater extends Recorder {
                 Issue issue = new Issue(issueId);
 
                     String commandValue = "Fixed in build " + buildName;
-                    Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, !runSilently);
+                    Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, null, !runSilently);
                     if(command.getStatus() == Command.Status.OK) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
                     } else {
