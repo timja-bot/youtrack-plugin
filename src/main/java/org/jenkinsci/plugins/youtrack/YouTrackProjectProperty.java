@@ -92,12 +92,16 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * Mapping from prefix words to corresponding commands.
      */
     @Getter @Setter private List<PrefixCommandPair> prefixCommandPairs;
+    /**
+     * How the build should fail if we can't apply the commands
+     */
+    @Getter @Setter private YoutrackBuildFailureMode failureMode;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String commentText) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String commentText, YoutrackBuildFailureMode failureMode) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -113,6 +117,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.trackCommits = trackCommits;
         this.project = project;
         this.commentText = commentText;
+        this.failureMode = failureMode;
         this.prefixCommandPairs = new ArrayList<PrefixCommandPair>();
     }
 
@@ -347,6 +352,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setProject(project);
             result.setPrefixCommandPairs(prefixCommandPairs);
             result.setCommentText(commentText);
+            result.setFailureMode(failureMode);
         }
         return result;
     }

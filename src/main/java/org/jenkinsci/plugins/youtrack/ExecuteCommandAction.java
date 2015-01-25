@@ -90,6 +90,9 @@ public class ExecuteCommandAction extends Builder {
                     for (Issue issue : issues) {
                         Command appliedCommand = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandToExecute, expandedComment, commentVisibility, null, true);
                         appliedCommands.add(appliedCommand);
+                        if (appliedCommand.getStatus() != Command.Status.OK) {
+                            youTrackSite.failed(build);
+                        }
                     }
                     if (!appliedCommands.isEmpty()) {
                         YouTrackCommandAction youTrackCommandAction = build.getAction(YouTrackCommandAction.class);
@@ -105,6 +108,7 @@ public class ExecuteCommandAction extends Builder {
                         listener.getLogger().println("No issues to apply command for");
                     }
                 } else {
+                    youTrackSite.failed(build);
                     listener.getLogger().println("User not logged in");
                 }
             } else {

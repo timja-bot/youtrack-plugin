@@ -1,6 +1,8 @@
 package org.jenkinsci.plugins.youtrack;
 
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
 import lombok.Getter;
 import lombok.Setter;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -27,6 +29,7 @@ public class YouTrackSite {
     @Getter @Setter private transient String executeProjectLimits;
     @Getter @Setter private transient List<PrefixCommandPair> prefixCommandPairs;
     @Getter @Setter private boolean trackCommits;
+    @Getter @Setter private YoutrackBuildFailureMode failureMode;
 
     @DataBoundConstructor
     public YouTrackSite(String name, String username, String password, String url) {
@@ -49,5 +52,23 @@ public class YouTrackSite {
             return sites[0];
         }
         return null;
+    }
+
+
+    /**
+     * Updates the result for build, depending on the failure mode.
+     * @param build the build to update the result for.
+     */
+    public void failed(AbstractBuild<?, ?> build) {
+        switch (failureMode) {
+            case NONE:
+                break;
+            case UNSTABLE:
+                build.setResult(Result.UNSTABLE);
+                break;
+            case FAILURE:
+                build.setResult(Result.FAILURE);
+                break;
+        }
     }
 }

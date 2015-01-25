@@ -104,6 +104,7 @@ public class YouTrackBuildUpdater extends Recorder {
         User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
         if(user == null || !user.isLoggedIn()) {
             listener.getLogger().println("FAILED: to log in to youtrack");
+            youTrackSite.failed(build);
             return true;
         }
         EnvVars environment = build.getEnvironment(listener);
@@ -122,6 +123,7 @@ public class YouTrackBuildUpdater extends Recorder {
             listener.getLogger().println("Added build " + buildName + " to bundle: " + inputBundleName);
         } else {
             listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + inputBundleName);
+            youTrackSite.failed(build);
         }
 
         youTrackCommandAction.addCommand(addedBuild);
@@ -142,6 +144,7 @@ public class YouTrackBuildUpdater extends Recorder {
                     if(command.getStatus() == Command.Status.OK) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
                     } else {
+                        youTrackSite.failed(build);
                         listener.getLogger().println("FAILED: updating Fixed in build to " + buildName + " for " + issueId);
                     }
                     youTrackCommandAction.addCommand(command);

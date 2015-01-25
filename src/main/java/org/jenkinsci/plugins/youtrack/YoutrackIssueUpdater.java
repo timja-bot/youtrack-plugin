@@ -90,6 +90,7 @@ public class YoutrackIssueUpdater {
         User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
         if (user == null || !user.isLoggedIn()) {
             listener.getLogger().append("FAILED: log in with set YouTrack user");
+            youTrackSite.failed(build);
         }
         performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
     }
@@ -180,7 +181,7 @@ public class YoutrackIssueUpdater {
                     revisionsSaver = plugin.getRevisionsSaver();
                 }
                 if ((youTrackSite.isTrackCommits() && (revisionsSaver != null && !revisionsSaver.isProcessed(next.getCommitId()))) || !youTrackSite.isTrackCommits()) {
-                    List<Command> commandList = executeCommandsIfEnabled(listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
+                    List<Command> commandList = executeCommandsIfEnabled(build, listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
                     for (Command command : commandList) {
                         commandAction.addCommand(command);
                     }
@@ -247,6 +248,8 @@ public class YoutrackIssueUpdater {
     /**
      * Executes the commands if execute commands is enabled;
      *
+     *
+     * @param build
      * @param listener       the listener.
      * @param youTrackSite   YouTrack site.
      * @param youTrackServer YouTrack server.
@@ -257,7 +260,7 @@ public class YoutrackIssueUpdater {
      * @param msg            the message to parse.
      * @return the list of commands tried to be executed.
      */
-    List<Command> executeCommandsIfEnabled(BuildListener listener, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, List<Issue> fixedIssues, ChangeLogSet.Entry changeLogEntry, String msg) {
+    List<Command> executeCommandsIfEnabled(AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Project> projects, List<Issue> fixedIssues, ChangeLogSet.Entry changeLogEntry, String msg) {
         List<Command> commands = new ArrayList<Command>();
         if (youTrackSite.isCommandsEnabled()) {
             Map<String, String> prefixCommands = getPrefixCommands(youTrackSite);
@@ -330,9 +333,9 @@ public class YoutrackIssueUpdater {
                     }
 
                     if (extraPrefixCommand != null) {
-                        applyCommandToIssue(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), extraPrefixCommand, null, listener, commands, isSilent);
+                        applyCommandToIssue(build, youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), extraPrefixCommand, null, listener, commands, isSilent);
                     }
-                    applyCommandToIssue(youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), issueAndCommand.getSecond(), comment, listener, commands, isSilent);
+                    applyCommandToIssue(build, youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), issueAndCommand.getSecond(), comment, listener, commands, isSilent);
                 }
             }
         }
@@ -356,13 +359,14 @@ public class YoutrackIssueUpdater {
         return new Pair<String, String>(issueId, command);
     }
 
-    private void applyCommandToIssue(YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String issueId, String command, String comment, BuildListener listener, List<Command> commands, boolean silent) {
+    private void applyCommandToIssue(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, List<Issue> fixedIssues, ChangeLogSet.Entry next, String issueId, String command, String comment, BuildListener listener, List<Command> commands, boolean silent) {
         User userByEmail = null;
         if (youTrackSite.isRunAsEnabled()) {
             String address = next.getAuthor().getProperty(Mailer.UserProperty.class).getAddress();
             userByEmail = youTrackServer.getUserByEmail(user, address);
             if (userByEmail == null) {
                 listener.getLogger().println("Failed to find user with e-mail: " + address);
+                youTrackSite.failed(build);
             }
         }
 
@@ -383,6 +387,7 @@ public class YoutrackIssueUpdater {
             listener.getLogger().println("Applied command: " + command + " to issue: " + issueId);
         } else {
             listener.getLogger().println("FAILED: Applying command: " + command + " to issue: " + issueId);
+            youTrackSite.failed(build);
         }
         commands.add(cmd);
         Issue after = youTrackServer.getIssue(user, issueId, stateFieldName);
@@ -456,6 +461,7 @@ public class YoutrackIssueUpdater {
                 listener.getLogger().println("Commented on " + relatedIssue.getId());
             } else {
                 listener.getLogger().println("FAILED: Commented on " + relatedIssue.getId());
+                youTrackSite.failed(build);
             }
         }
 
