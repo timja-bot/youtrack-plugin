@@ -128,6 +128,10 @@ public class YoutrackIssueUpdater {
             }
         }
 
+        List<ChangeLogSet.Entry> changeLogEntries = new ArrayList<ChangeLogSet.Entry>();
+        while (changeLogIterator.hasNext()) {
+            changeLogEntries.add(changeLogIterator.next());
+        }
 
         YouTrackCommandAction commandAction = new YouTrackCommandAction(build);
 
@@ -135,13 +139,12 @@ public class YoutrackIssueUpdater {
 
         if (youTrackSite.isCommentEnabled()) {
             ArrayListMultimap<Issue, ChangeLogSet.Entry> relatedChanges = ArrayListMultimap.create();
-            while (changeLogIterator.hasNext()) {
-                ChangeLogSet.Entry next = changeLogIterator.next();
-                String msg = getMessage(next);
+            for (ChangeLogSet.Entry entry : changeLogEntries) {
+                String msg = getMessage(entry);
 
                 List<Issue> issuesFromCommit = findIssuesFromCommit(msg, projects);
                 for (Issue issue : issuesFromCommit) {
-                    relatedChanges.put(issue, next);
+                    relatedChanges.put(issue, entry);
                 }
             }
 
@@ -155,11 +158,8 @@ public class YoutrackIssueUpdater {
         }
 
 
-        while (changeLogIterator.hasNext()) {
-            ChangeLogSet.Entry next = changeLogIterator.next();
-
-            String msg = getMessage(next);
-
+        for ( ChangeLogSet.Entry entry : changeLogEntries) {
+            String msg = getMessage(entry);
 
             if (projects != null) {
                 List<Project> youtrackProjects = new ArrayList<Project>(projects.size());
@@ -180,14 +180,14 @@ public class YoutrackIssueUpdater {
                 if (plugin != null) {
                     revisionsSaver = plugin.getRevisionsSaver();
                 }
-                if ((youTrackSite.isTrackCommits() && (revisionsSaver != null && !revisionsSaver.isProcessed(next.getCommitId()))) || !youTrackSite.isTrackCommits()) {
-                    List<Command> commandList = executeCommandsIfEnabled(build, listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, next, msg);
+                if ((youTrackSite.isTrackCommits() && (revisionsSaver != null && !revisionsSaver.isProcessed(entry.getCommitId()))) || !youTrackSite.isTrackCommits()) {
+                    List<Command> commandList = executeCommandsIfEnabled(build, listener, youTrackSite, youTrackServer, user, youtrackProjects, fixedIssues, entry, msg);
                     for (Command command : commandList) {
                         commandAction.addCommand(command);
                     }
                     if (youTrackSite.isTrackCommits() && !commandList.isEmpty()) {
                         if (revisionsSaver != null) {
-                            revisionsSaver.addProcessed(next.getCommitId());
+                            revisionsSaver.addProcessed(entry.getCommitId());
                         }
                     }
                 }
