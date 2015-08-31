@@ -20,7 +20,7 @@
                         </select>
                     </f:entry>
 
-                    <f:entry title="${%Failure Mode}" field="failureModeD">
+                    <f:entry title="${%Failure Mode}" field="failureMode">
                         <label>
                             <f:radio name="youtrack.failureMode" value="NONE"
                                      checked="${instance.failureMode==null || instance.failureMode=='NONE'}" />
