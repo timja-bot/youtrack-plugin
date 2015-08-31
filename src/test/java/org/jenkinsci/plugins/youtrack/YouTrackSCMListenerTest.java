@@ -29,43 +29,6 @@ import static org.mockito.Mockito.*;
  * Test the SCM listener.
  */
 public class YouTrackSCMListenerTest {
-    public static class MockEntry extends ChangeLogSet.Entry {
-
-        private final String msg;
-        private String commitId;
-
-        public MockEntry(String msg) {
-            this.msg = msg;
-        }
-
-        public MockEntry(String msg, String commitId) {
-            this.commitId = commitId;
-            this.msg = msg;
-        }
-
-        @Override
-        public Collection<String> getAffectedPaths() {
-            return null;
-        }
-
-        @Override
-        public hudson.model.User getAuthor() {
-            return null;
-        }
-
-        @Override
-        public String getMsg() {
-            return this.msg;
-        }
-
-
-        @Override
-        public String getCommitId() {
-            return commitId;
-        }
-    }
-
-
     @Test
     public void testExecuteCommand() throws Exception {
         FreeStyleProject project = mock(FreeStyleProject.class);
@@ -116,7 +79,7 @@ public class YouTrackSCMListenerTest {
         YouTrackSCMListener scmListener = spy(new YouTrackSCMListener());
         doReturn(youTrackSite).when(issueUpdate).getYouTrackSite(freeStyleBuild);
         doReturn(youTrackServer).when(issueUpdate).getYouTrackServer(youTrackSite);
-        doReturn(user).when(youTrackServer).login("test","test");
+        doReturn(user).when(youTrackServer).login("test", "test");
         doReturn(issueUpdate).when(scmListener).getYoutrackIssueUpdater();
 
 
@@ -153,15 +116,15 @@ public class YouTrackSCMListenerTest {
         doReturn(Lists.newArrayList(new Project("AT"), new Project("PYAT"))).when(server).getProjects(user);
 
 
-        doReturn(Lists.newArrayList(entry1,entry2,entry3).iterator()).when(changeLogSet).iterator();
+        doReturn(Lists.newArrayList(entry1, entry2, entry3).iterator()).when(changeLogSet).iterator();
         doReturn(build).when(build).getRootBuild();
         doReturn(new PrintStream(new ByteArrayOutputStream())).when(listener).getLogger();
         doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
         doReturn(project).when(build).getProject();
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
         doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
-        doReturn(user).when(server).login("test","test");
-        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+        doReturn(user).when(server).login("test", "test");
+        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?, ?>>any());
 
 
         youTrackSCMListener.onChangeLogParsed(build, listener, changeLogSet);
@@ -199,8 +162,8 @@ public class YouTrackSCMListenerTest {
         doReturn(project).when(build).getProject();
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
         doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
-        doReturn(user).when(server).login("test","test");
-        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?,?>>any());
+        doReturn(user).when(server).login("test", "test");
+        doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?, ?>>any());
 
 
         //todo: cn be replaced by verify
@@ -231,7 +194,6 @@ public class YouTrackSCMListenerTest {
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
 
 
-
         YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
         FreeStyleBuild build = mock(FreeStyleBuild.class);
         FreeStyleProject project = mock(FreeStyleProject.class);
@@ -256,7 +218,7 @@ public class YouTrackSCMListenerTest {
         doReturn("http://test.com/buildurl").when(issueUpdater).getAbsoluteUrlForBuild(Matchers.<AbstractBuild<?, ?>>any());
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
         doReturn(server).when(issueUpdater).getYouTrackServer(youTrackSite);
-        doReturn(user).when(server).login("test","test");
+        doReturn(user).when(server).login("test", "test");
         doReturn(project).when(build).getProject();
 
 
@@ -282,7 +244,6 @@ public class YouTrackSCMListenerTest {
 
         assertThat(commentCommands.size(), is(2));
     }
-
 
     @Test
     public void testMultilineComment() throws Exception {
@@ -348,7 +309,7 @@ public class YouTrackSCMListenerTest {
         doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(freeStyleBuild);
         doReturn(youTrackServer).when(issueUpdater).getYouTrackServer(youTrackSite);
-        doReturn(user).when(youTrackServer).login("test","test");
+        doReturn(user).when(youTrackServer).login("test", "test");
 
         youTrackSCMListener.onChangeLogParsed(freeStyleBuild, listener, changeLogSet);
 
@@ -416,7 +377,7 @@ public class YouTrackSCMListenerTest {
 
         YouTrackSCMListener youTrackSCMListener = spy(new YouTrackSCMListener());
         YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
-        doReturn(user).when(server).login("test","test");
+        doReturn(user).when(server).login("test", "test");
 
         doReturn(issueUpdater).when(youTrackSCMListener).getYoutrackIssueUpdater();
         doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(freeStyleBuild);
@@ -437,12 +398,11 @@ public class YouTrackSCMListenerTest {
         ChangeLogSet logSet = mock(ChangeLogSet.class);
 
 
-
         YoutrackIssueUpdater issueUpdater = mock(YoutrackIssueUpdater.class);
         YoutrackUpdateIssuesRecorder issuesRecorder = new YoutrackUpdateIssuesRecorder();
         YouTrackSCMListener scmListener = spy(new YouTrackSCMListener());
 
-        DescribableList<Publisher,Descriptor<Publisher>> publishers = new DescribableList<Publisher, Descriptor<Publisher>>(project);
+        DescribableList<Publisher, Descriptor<Publisher>> publishers = new DescribableList<Publisher, Descriptor<Publisher>>(project);
         publishers.add(issuesRecorder);
 
         doReturn(issueUpdater).when(scmListener).getYoutrackIssueUpdater();
@@ -452,10 +412,101 @@ public class YouTrackSCMListenerTest {
 
         doReturn(publishers).when(project).getPublishersList();
 
-        scmListener.onChangeLogParsed(build, listener,logSet );
+        scmListener.onChangeLogParsed(build, listener, logSet);
 
         verify(issueUpdater, times(0)).update(Matchers.<AbstractBuild>any(), Matchers.<BuildListener>any(), Matchers.<ChangeLogSet>any());
 
+    }
+
+    @Test
+    public void testCommentAndCommandsEnabled() throws Exception {
+        FreeStyleProject project = mock(FreeStyleProject.class);
+        AbstractBuild build = mock(AbstractBuild.class);
+        BuildListener listener = mock(BuildListener.class);
+        ChangeLogSet logSet = mock(ChangeLogSet.class);
+        YouTrackServer youTrackServer = mock(YouTrackServer.class);
+
+
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        youTrackSite.setCommandsEnabled(true);
+        youTrackSite.setCommentEnabled(true);
+        youTrackSite.setPluginEnabled(true);
+
+        ArrayList<Project> projects = new ArrayList<Project>();
+        Project project1 = new Project();
+        project1.setShortName("TP1");
+        projects.add(project1);
+
+        User user = new User();
+        user.setUsername("tester");
+        user.setLoggedIn(true);
+
+        YoutrackIssueUpdater issueUpdater = spy(new YoutrackIssueUpdater());
+        when(youTrackServer.getProjects(user)).thenReturn(projects);
+        YouTrackSCMListener scmListener = spy(new YouTrackSCMListener());
+
+        when(listener.getLogger()).thenReturn(new PrintStream(new ByteArrayOutputStream()));
+        doReturn(youTrackSite).when(issueUpdater).getYouTrackSite(build);
+        doReturn(youTrackServer).when(issueUpdater).getYouTrackServer(youTrackSite);
+        doReturn(issueUpdater).when(scmListener).getYoutrackIssueUpdater();
+        doReturn(project).when(build).getProject();
+        doReturn(build).when(build).getRootBuild();
+        doReturn("http://localhost/build").when(issueUpdater).getAbsoluteUrlForBuild(build);
+        doReturn(Lists.newArrayList(new MockEntry("#TP1-2 Fixed")).iterator()).when(logSet).iterator();
+        doReturn(user).when(youTrackServer).login("test", "test");
+        when(build.getAction(Matchers.any(Class.class))).thenCallRealMethod();
+        when(build.getActions()).thenCallRealMethod();
+        Mockito.doCallRealMethod().when(build).addAction(Matchers.<Action>anyObject());
+
+        Command addCommentCommand = new Command();
+        addCommentCommand.setStatus(Command.Status.OK);
+        doReturn(addCommentCommand).when(youTrackServer).comment("testsite", user, new Issue("TP1-2"), "Related build: http://localhost/build\nSHA: null", null, false);
+
+        Command executeCommand = new Command();
+        executeCommand.setStatus(Command.Status.OK);
+        doReturn(addCommentCommand).when(youTrackServer).applyCommand("testsite", user, new Issue("TP1-2"), "Fixed", null, null, null, true);
+
+        scmListener.onChangeLogParsed(build, listener, logSet);
+
+        YouTrackCommandAction youTrackCommandAction = build.getAction(YouTrackCommandAction.class);
+        List<Command> commands = youTrackCommandAction.getCommands();
+        assertEquals(2, commands.size());
+    }
+
+    public static class MockEntry extends ChangeLogSet.Entry {
+
+        private final String msg;
+        private String commitId;
+
+        public MockEntry(String msg) {
+            this.msg = msg;
+        }
+
+        public MockEntry(String msg, String commitId) {
+            this.commitId = commitId;
+            this.msg = msg;
+        }
+
+        @Override
+        public Collection<String> getAffectedPaths() {
+            return null;
+        }
+
+        @Override
+        public hudson.model.User getAuthor() {
+            return null;
+        }
+
+        @Override
+        public String getMsg() {
+            return this.msg;
+        }
+
+
+        @Override
+        public String getCommitId() {
+            return commitId;
+        }
     }
 
 }
