@@ -60,15 +60,17 @@ public class YouTrackSite {
      * @param build the build to update the result for.
      */
     public void failed(AbstractBuild<?, ?> build) {
-        switch (failureMode) {
-            case NONE:
-                break;
-            case UNSTABLE:
-                build.setResult(Result.UNSTABLE);
-                break;
-            case FAILURE:
-                build.setResult(Result.FAILURE);
-                break;
+        if (failureMode != null) {
+            switch (failureMode) {
+                case NONE:
+                    break;
+                case UNSTABLE:
+                    build.setResult(Result.UNSTABLE);
+                    break;
+                case FAILURE:
+                    build.setResult(Result.FAILURE);
+                    break;
+            }
         }
     }
 }

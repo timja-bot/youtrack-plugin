@@ -152,15 +152,18 @@ public class ExecuteCommandActionTest {
         doReturn(envVars).when(build).getEnvironment(listener);
         YouTrackSaveProjectShortNamesAction projectShortNamesAction = new YouTrackSaveProjectShortNamesAction(Lists.newArrayList(new Project("YT")));
         doReturn(projectShortNamesAction).when(build).getAction(YouTrackSaveProjectShortNamesAction.class);
+        Command toBeReturned = new Command();
+        toBeReturned.setStatus(Command.Status.OK);
 
         User user = new User();
         user.setLoggedIn(true);
         doReturn(user).when(server).login("test", "test");
+        doReturn(toBeReturned).when(server).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", "", null, true);
 
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", null, null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-1"), "Fixed", "This is fixed", "", null, true);
     }
 
     @Test
@@ -195,11 +198,12 @@ public class ExecuteCommandActionTest {
         User user = new User();
         user.setLoggedIn(true);
         doReturn(user).when(server).login("test", "test");
+        doReturn(new Command()).when(server).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", "", null, true);
 
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", null, null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("XYZ-123"), "Fixed", "This is fixed", "", null, true);
     }
 
     @Test
@@ -232,12 +236,15 @@ public class ExecuteCommandActionTest {
         doReturn(projectShortNamesAction).when(build).getAction(YouTrackSaveProjectShortNamesAction.class);
 
         doReturn(user).when(server).login("test", "test");
+        Command toBeReturned = new Command();
+        doReturn(toBeReturned).when(server).applyCommand("test", user, new Issue("YT-2"), "Version: 2", "Upgrade versions", "", null, true);
+        doReturn(toBeReturned).when(server).applyCommand("test", user, new Issue("YT-3"), "Version: 2", "Upgrade versions", "", null, true);
 
         boolean perform = commandAction.perform(build, launcher, listener);
 
         assertThat(perform, is(true));
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-2"), "Version: 2", "Upgrade versions", null, null, true);
-        verify(server, times(1)).applyCommand("test", user, new Issue("YT-3"), "Version: 2", "Upgrade versions", null, null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-2"), "Version: 2", "Upgrade versions", "", null, true);
+        verify(server, times(1)).applyCommand("test", user, new Issue("YT-3"), "Version: 2", "Upgrade versions", "", null, true);
 
         verify(build, times(1)).addAction(any(Action.class));
 

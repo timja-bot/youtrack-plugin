@@ -95,7 +95,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     /**
      * How the build should fail if we can't apply the commands
      */
-    @Getter @Setter private YoutrackBuildFailureMode failureMode;
+    @Getter @Setter private YoutrackBuildFailureMode failureMode = YoutrackBuildFailureMode.NONE;
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
