@@ -277,16 +277,7 @@ public class YouTrackSCMListenerTest {
         command1.setIssueId("TP1-1");
         command1.setStatus(Command.Status.OK);
         command1.setUsername(user.getUsername());
-        Command command2 = new Command();
-        command2.setDate(new Date());
-        command2.setComment(partialSecondComment);
-        command2.setCommand("Fixed");
-        command2.setSilent(false);
-        command2.setIssueId("TP1-1");
-        command2.setStatus(Command.Status.OK);
-        command2.setUsername(user.getUsername());
         when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-1"), "Fixed", partialFirstComment, null, null, true)).thenReturn(command1);
-        when(youTrackServer.applyCommand("testsite", user, new Issue("TP1-2"), "", partialSecondComment, null, null, true)).thenReturn(command2);
 
         ArrayList<Project> projects = new ArrayList<Project>();
         Project project1 = new Project();
@@ -315,7 +306,7 @@ public class YouTrackSCMListenerTest {
 
         YouTrackCommandAction youTrackCommandAction = freeStyleBuild.getAction(YouTrackCommandAction.class);
         List<Command> commands = youTrackCommandAction.getCommands();
-        assertEquals(2, commands.size());
+        assertEquals(1, commands.size());
     }
 
     @Test
