@@ -41,9 +41,10 @@ public class YouTrackBuildUpdater extends Recorder {
     @Getter @Setter private boolean markFixedIfUnstable;
     @Getter @Setter private boolean onlyAddIfHasFixedIssues;
     @Getter @Setter private boolean runSilently;
+    @Getter @Setter private String buildUpdateCommand;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently) {
+    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently, String buildUpdateCommand) {
         this.name = name;
         this.bundleName = bundleName;
 
@@ -51,6 +52,10 @@ public class YouTrackBuildUpdater extends Recorder {
         this.markFixedIfUnstable = markFixedIfUnstable;
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
         this.runSilently = runSilently;
+        this.buildUpdateCommand = buildUpdateCommand;
+        if (buildUpdateCommand == null) {
+            this.buildUpdateCommand = "Fixed in build: ${YOUTRACK_BUILD_NAME}";
+        }
     }
 
     @Deprecated
@@ -139,7 +144,9 @@ public class YouTrackBuildUpdater extends Recorder {
                 for (String issueId : issueIds) {
                 Issue issue = new Issue(issueId);
 
-                    String commandValue = "Fixed in build " + buildName;
+                    environment.put("YOUTRACK_BUILD_NAME", buildName);
+
+                    String commandValue = environment.expand(buildUpdateCommand);
                     Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, null, !runSilently);
                     if(command.getStatus() == Command.Status.OK) {
                         listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);

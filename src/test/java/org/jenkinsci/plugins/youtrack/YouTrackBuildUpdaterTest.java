@@ -16,7 +16,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class YouTrackBuildUpdaterTest {
@@ -27,7 +27,7 @@ public class YouTrackBuildUpdaterTest {
         Launcher launcher = mock(Launcher.class);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false, null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
         doReturn(youTrackSite).when(youTrackBuildUpdater).getYouTrackSite(build);
@@ -43,7 +43,7 @@ public class YouTrackBuildUpdaterTest {
         Launcher launcher = mock(Launcher.class);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, true, false));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, true, false, null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
         doReturn(youTrackSite).when(youTrackBuildUpdater).getYouTrackSite(build);
@@ -62,7 +62,7 @@ public class YouTrackBuildUpdaterTest {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
 
@@ -93,7 +93,7 @@ public class YouTrackBuildUpdaterTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
         when(build.getResult()).thenReturn(Result.SUCCESS);
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
 
@@ -111,7 +111,7 @@ public class YouTrackBuildUpdaterTest {
         when(youTrackServer.addBuildToBundle("site", user, "Build Bundle", "${BUILD_NUMBER}")).thenReturn(command);
         Command command1 = new Command();
         command1.setStatus(Command.Status.OK);
-        when(youTrackServer.applyCommand("site", user, e, "Fixed in build ${BUILD_NUMBER}", null, null, null, true)).thenReturn(command1);
+        when(youTrackServer.applyCommand("site", user, e, "Fixed in build: ${BUILD_NUMBER}", null, null, null, true)).thenReturn(command1);
         user.setUsername("user");
         user.setLoggedIn(true);
         doReturn(user).when(youTrackServer).login("user","password");
