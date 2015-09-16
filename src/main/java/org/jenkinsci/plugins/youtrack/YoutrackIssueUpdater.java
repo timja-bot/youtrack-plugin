@@ -335,7 +335,10 @@ public class YoutrackIssueUpdater {
                     if (extraPrefixCommand != null) {
                         applyCommandToIssue(build, youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), extraPrefixCommand, null, listener, commands, isSilent);
                     }
-                    applyCommandToIssue(build, youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), issueAndCommand.getSecond(), comment, listener, commands, isSilent);
+
+                    if (issueAndCommand.getSecond() != null && !issueAndCommand.getSecond().equals("")) {
+                        applyCommandToIssue(build, youTrackSite, youTrackServer, user, fixedIssues, changeLogEntry, issueAndCommand.getFirst(), issueAndCommand.getSecond(), comment, listener, commands, isSilent);
+                    }
                 }
             }
         }
