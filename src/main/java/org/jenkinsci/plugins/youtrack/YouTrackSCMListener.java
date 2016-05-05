@@ -1,17 +1,16 @@
 package org.jenkinsci.plugins.youtrack;
 
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
+import hudson.model.*;
 import hudson.model.listeners.SCMListener;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.tasks.Publisher;
-import hudson.tasks.Recorder;
 import hudson.util.DescribableList;
 
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
 
 public class YouTrackSCMListener extends SCMListener {
+
 
     @Override
     public void onChangeLogParsed(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws Exception {
@@ -28,7 +27,7 @@ public class YouTrackSCMListener extends SCMListener {
             }
             if (!hasRecorder) {
                 YoutrackIssueUpdater youtrackIssueUpdater = getYoutrackIssueUpdater();
-                youtrackIssueUpdater.update(build, listener, changeLogSet);
+                youtrackIssueUpdater.update(build.getProject().getScm(), build, listener, changeLogSet);
             }
         }
     }

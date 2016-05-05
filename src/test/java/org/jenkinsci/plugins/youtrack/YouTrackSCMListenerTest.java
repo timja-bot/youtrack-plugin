@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import hudson.model.*;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.tasks.Publisher;
 import hudson.util.DescribableList;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
@@ -405,7 +406,7 @@ public class YouTrackSCMListenerTest {
 
         scmListener.onChangeLogParsed(build, listener, logSet);
 
-        verify(issueUpdater, times(0)).update(Matchers.<AbstractBuild>any(), Matchers.<BuildListener>any(), Matchers.<ChangeLogSet>any());
+        verify(issueUpdater, times(0)).update(Matchers.<SCM>any(), Matchers.<AbstractBuild>any(), Matchers.<BuildListener>any(), Matchers.<ChangeLogSet>any());
 
     }
 

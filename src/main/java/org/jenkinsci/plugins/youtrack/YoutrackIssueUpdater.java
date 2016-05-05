@@ -6,14 +6,19 @@ import groovy.text.SimpleTemplateEngine;
 import groovy.text.Template;
 import groovy.text.TemplateEngine;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.tasks.Mailer;
 import jenkins.model.Jenkins;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.jenkinsci.plugins.gitclient.GitClient;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
@@ -78,7 +83,7 @@ public class YoutrackIssueUpdater {
         return fixedValues;
     }
 
-    public void update(AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws InvocationTargetException, IllegalAccessException {
+    public void update(SCM scm, AbstractBuild<?, ?> build, BuildListener listener, ChangeLogSet<?> changeLogSet) throws InvocationTargetException, IllegalAccessException {
         YouTrackSite youTrackSite = getYouTrackSite(build);
         if (youTrackSite == null || !youTrackSite.isPluginEnabled()) {
             return;
@@ -92,7 +97,7 @@ public class YoutrackIssueUpdater {
             listener.getLogger().append("FAILED: log in with set YouTrack user");
             youTrackSite.failed(build);
         }
-        performActions(build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
+        performActions(scm, build, listener, youTrackSite, changeLogIterator, youTrackServer, user);
     }
 
     YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
@@ -103,7 +108,7 @@ public class YoutrackIssueUpdater {
         return YouTrackSite.get(build.getProject());
     }
 
-    public void performActions(AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, Iterator<? extends ChangeLogSet.Entry> changeLogIterator, YouTrackServer youTrackServer, User user) throws IllegalAccessException, InvocationTargetException {
+    public void performActions(SCM scm, AbstractBuild<?, ?> build, BuildListener listener, YouTrackSite youTrackSite, Iterator<? extends ChangeLogSet.Entry> changeLogIterator, YouTrackServer youTrackServer, User user) throws IllegalAccessException, InvocationTargetException {
         build.addAction(new YouTrackIssueAction(build.getProject()));
 
         List<Project> projects = youTrackServer.getProjects(user);
@@ -137,10 +142,18 @@ public class YoutrackIssueUpdater {
 
         List<Issue> fixedIssues = new ArrayList<Issue>();
 
+        EnvVars environment = null;
+        try {
+            environment = build.getEnvironment(listener);
+        } catch (IOException e) {
+            LOGGER.error(e, e);
+        } catch (InterruptedException e) {
+            LOGGER.error(e, e);
+        }
         if (youTrackSite.isCommentEnabled()) {
             ArrayListMultimap<Issue, ChangeLogSet.Entry> relatedChanges = ArrayListMultimap.create();
             for (ChangeLogSet.Entry entry : changeLogEntries) {
-                String msg = getMessage(entry);
+                String msg = getMessage(scm, entry, listener, environment, build);
 
                 List<Issue> issuesFromCommit = findIssuesFromCommit(msg, projects);
                 for (Issue issue : issuesFromCommit) {
@@ -159,7 +172,7 @@ public class YoutrackIssueUpdater {
 
 
         for ( ChangeLogSet.Entry entry : changeLogEntries) {
-            String msg = getMessage(entry);
+            String msg = getMessage(scm, entry, listener, environment, build);
 
             if (projects != null) {
                 List<Project> youtrackProjects = new ArrayList<Project>(projects.size());
@@ -205,18 +218,29 @@ public class YoutrackIssueUpdater {
     }
 
 
-    public static String getMessage(ChangeLogSet.Entry next) throws IllegalAccessException, InvocationTargetException {
+    public static String getMessage(SCM scm, ChangeLogSet.Entry next, BuildListener listener, EnvVars environment, AbstractBuild<?, ?> build) throws IllegalAccessException, InvocationTargetException {
         String msg;
-        if (next.getClass().getCanonicalName().equals("hudson.plugins.git.GitChangeSet")) {
-
+        if (scm != null && scm.getClass().getSimpleName().equals("GitSCM")) {
             try {
-                Method getComment = next.getClass().getMethod("getComment");
-                Object message = getComment.invoke(next);
-                msg = (String) message;
-            } catch (NoSuchMethodException e) {
-                msg = next.getMsg();
+                Method createClient = scm.getClass().getMethod("createClient", TaskListener.class, EnvVars.class, Run.class, FilePath.class);
+                GitClient gitClient = (GitClient) createClient.invoke(scm, listener, environment, build, build.getWorkspace());
+                List<String> stringList = gitClient.showRevision(gitClient.revParse(next.getCommitId()));
+                StringBuilder message = new StringBuilder();
+                for (String line : stringList) {
+                    if (line.startsWith("   ")) {
+                        String substring = line.substring(4);
+                        message.append(substring).append("\n");
+                    }
+                }
+
+                msg = message.toString();
             } catch (SecurityException e) {
                 throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+
             }
         } else {
             msg = next.getMsg();

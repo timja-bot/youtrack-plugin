@@ -20,7 +20,7 @@ public class YoutrackUpdateIssuesRecorder extends Recorder {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         try {
             YoutrackIssueUpdater updater = new YoutrackIssueUpdater();
-            updater.update(build, listener, build.getChangeSet());
+            updater.update(build.getProject().getScm(), build, listener, build.getChangeSet());
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {

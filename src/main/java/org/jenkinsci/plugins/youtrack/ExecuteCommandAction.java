@@ -8,6 +8,7 @@ import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.BuildListener;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.SCM;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import lombok.Getter;
@@ -66,7 +67,7 @@ public class ExecuteCommandAction extends Builder {
                     EnvVars environment = build.getEnvironment(listener);
 
                     try {
-                        String changes = createChangesString(build);
+                        String changes = createChangesString(build,listener);
                         environment.put("YOUTRACK_CHANGES", changes);
                     } catch (InvocationTargetException e) {
                         LOGGER.error(e);
@@ -120,12 +121,25 @@ public class ExecuteCommandAction extends Builder {
         return true;
     }
 
-    String createChangesString(AbstractBuild<?, ?> build) throws InvocationTargetException, IllegalAccessException {
+    String createChangesString(AbstractBuild<?, ?> build, BuildListener listener) throws InvocationTargetException, IllegalAccessException {
         StringBuilder stringBuilder = new StringBuilder();
         ChangeLogSet<? extends ChangeLogSet.Entry> changeSet = build.getChangeSet();
+        EnvVars environment = null;
+        try {
+            environment = build.getEnvironment(listener);
+        } catch (IOException e) {
+            LOGGER.error(e,e);
+        } catch (InterruptedException e) {
+            LOGGER.error(e,e);
+        }
         if (changeSet != null) {
             for (ChangeLogSet.Entry entry : changeSet) {
-                String message = YoutrackIssueUpdater.getMessage(entry);
+                AbstractProject<?, ?> project = build.getProject();
+                SCM scm = null;
+                if (project != null) {
+                    scm = project.getScm();
+                }
+                String message = YoutrackIssueUpdater.getMessage(scm,entry, listener, environment, build);
                 stringBuilder.append(entry.getMsg());
                 stringBuilder.append("\n\n");
             }
