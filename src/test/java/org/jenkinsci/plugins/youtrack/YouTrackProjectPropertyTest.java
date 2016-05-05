@@ -29,7 +29,7 @@ public class YouTrackProjectPropertyTest {
     @Test
     public void testNotEnabledButSiteConfigured() throws IOException, SAXException {
         JenkinsRule.WebClient webClient = j.createWebClient();
-        HtmlPage globalConfiguration = webClient.goTo("/configure");
+        HtmlPage globalConfiguration = webClient.goTo("configure");
         HtmlForm form = globalConfiguration.getFormByName("config");
 
         HtmlElement youtrackSitesSection = youtrackSitesSection(globalConfiguration);
