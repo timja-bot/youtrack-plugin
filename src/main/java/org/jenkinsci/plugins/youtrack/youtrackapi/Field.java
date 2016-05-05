@@ -60,6 +60,13 @@ public class Field {
             if (qName.equals("defaultParam") && attributes.getValue("name").equals("defaultBundle")) {
                 field.defaultBundle=  attributes.getValue("value");
             }
+            if (qName.equals("projectCustomField")) {
+                field.type = attributes.getValue("type");
+            }
+            if (qName.equals("param") && attributes.getValue("name").equals("bundle")) {
+                field.defaultBundle=  attributes.getValue("value");
+            }
+
         }
     }
 }

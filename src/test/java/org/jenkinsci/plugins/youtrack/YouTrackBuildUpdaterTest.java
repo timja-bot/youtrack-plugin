@@ -27,7 +27,7 @@ public class YouTrackBuildUpdaterTest {
         Launcher launcher = mock(Launcher.class);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false, null));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false, null,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(false);
         doReturn(youTrackSite).when(youTrackBuildUpdater).getYouTrackSite(build);
@@ -43,7 +43,7 @@ public class YouTrackBuildUpdaterTest {
         Launcher launcher = mock(Launcher.class);
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, true, false, null));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, true, false, null,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
         doReturn(youTrackSite).when(youTrackBuildUpdater).getYouTrackSite(build);
@@ -62,7 +62,7 @@ public class YouTrackBuildUpdaterTest {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
 
@@ -93,7 +93,7 @@ public class YouTrackBuildUpdaterTest {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         when(listener.getLogger()).thenReturn(new PrintStream(stream));
         when(build.getResult()).thenReturn(Result.SUCCESS);
-        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null));
+        YouTrackBuildUpdater youTrackBuildUpdater = spy(new YouTrackBuildUpdater(null, "Build Bundle", "${BUILD_NUMBER}", false, false, false,null,null));
         YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
         youTrackSite.setPluginEnabled(true);
 

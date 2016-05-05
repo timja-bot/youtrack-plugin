@@ -274,6 +274,48 @@ public class YouTrackServer {
         }
         return null;
     }
+    public String getBuildBundleNameForField(User user, String projectId, String fieldName) {
+        try {
+
+            String encodedProjectId = URLEncoder.encode(projectId, "ISO-8859-1").replace("+", "%20");
+            String encodedFieldName = URLEncoder.encode(fieldName, "ISO-8859-1").replace("+", "%20");
+
+            String fieldUrl = serverUrl + "/rest/admin/project/"+encodedProjectId+"/customfield/" + encodedFieldName;
+            URL url = new URL(fieldUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+
+            for (String cookie : user.getCookies()) {
+
+                urlConnection.setRequestProperty("Cookie", cookie);
+            }
+
+            SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+            try {
+                if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    Field.FieldHandler dh = new Field.FieldHandler(fieldName, fieldUrl);
+                    saxParser.parse(urlConnection.getInputStream(), dh);
+                    Field field = dh.getField();
+
+                    if (field.getType().equals("build[1]")) {
+                        return field.getDefaultBundle();
+                    } else {
+                        return null;
+                    }
+                }
+            } catch (ParserConfigurationException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            } catch (SAXException e) {
+                LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+            }
+        } catch (MalformedURLException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not get YouTrack Projects", e);
+        }
+        return null;
+    }
 
     public List<Field> getFields(User user) {
         List<Field> fields = new ArrayList<Field>();

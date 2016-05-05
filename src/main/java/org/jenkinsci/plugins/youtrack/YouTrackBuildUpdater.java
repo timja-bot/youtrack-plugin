@@ -11,17 +11,18 @@ import hudson.tasks.Recorder;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
-import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
+import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
-import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Updates build bundle.
@@ -37,14 +38,18 @@ public class YouTrackBuildUpdater extends Recorder {
      * Name of build to create and use for setting Fixed in build.
      */
     @Setter private String buildName;
+    /**
+     * @deprecated we now look up the bundle name from the field
+     */
     @Getter @Setter private String bundleName;
     @Getter @Setter private boolean markFixedIfUnstable;
     @Getter @Setter private boolean onlyAddIfHasFixedIssues;
     @Getter @Setter private boolean runSilently;
     @Getter @Setter private String buildUpdateCommand;
+    @Getter @Setter private String fieldBuildBundleToUpdate;
 
     @DataBoundConstructor
-    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently, String buildUpdateCommand) {
+    public YouTrackBuildUpdater(String name, String bundleName, String buildName, boolean markFixedIfUnstable, boolean onlyAddIfHasFixedIssues, boolean runSilently, String buildUpdateCommand, String fieldBuildBundleToUpdate) {
         this.name = name;
         this.bundleName = bundleName;
 
@@ -53,6 +58,10 @@ public class YouTrackBuildUpdater extends Recorder {
         this.onlyAddIfHasFixedIssues = onlyAddIfHasFixedIssues;
         this.runSilently = runSilently;
         this.buildUpdateCommand = buildUpdateCommand;
+        this.fieldBuildBundleToUpdate = fieldBuildBundleToUpdate;
+        if (this.buildName == null && this.fieldBuildBundleToUpdate == null) {
+            this.fieldBuildBundleToUpdate = "Fixed in build";
+        }
         if (buildUpdateCommand == null) {
             this.buildUpdateCommand = "Fixed in build: ${YOUTRACK_BUILD_NAME}";
         }
@@ -121,17 +130,41 @@ public class YouTrackBuildUpdater extends Recorder {
             buildName = environment.expand(getBuildName());
 
         }
-        String inputBundleName =environment.expand(getBundleName());
 
-        Command addedBuild = youTrackServer.addBuildToBundle(youTrackSite.getName(), user, inputBundleName, buildName);
-        if(addedBuild.getStatus() == Command.Status.OK) {
-            listener.getLogger().println("Added build " + buildName + " to bundle: " + inputBundleName);
-        } else {
-            listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + inputBundleName);
-            youTrackSite.failed(build);
+
+        List<String> projectIds = new ArrayList<String>();
+        if (action != null) {
+            List<String> issueIds = action.getIssueIds();
+            for (String issueId : issueIds) {
+                String[] split = issueId.split("\\-");
+                projectIds.add(split[0]);
+            }
         }
 
-        youTrackCommandAction.addCommand(addedBuild);
+        Set<String> bundleNames = new HashSet<String>();
+        if (fieldBuildBundleToUpdate != null) {
+            for (String projectId : projectIds) {
+                String inputBundleName = youTrackServer.getBuildBundleNameForField(user, projectId, fieldBuildBundleToUpdate);
+                if (inputBundleName != null && !inputBundleName.isEmpty()) {
+
+                    bundleNames.add(inputBundleName);
+                }
+            }
+        } else {
+            bundleNames.add(environment.expand(getBundleName()));
+        }
+
+        for (String bundleName : bundleNames) {
+            Command addedBuild = youTrackServer.addBuildToBundle(youTrackSite.getName(), user, bundleName, buildName);
+            if(addedBuild.getStatus() == Command.Status.OK) {
+                listener.getLogger().println("Added build " + buildName + " to bundle: " + bundleName);
+            } else {
+                listener.getLogger().println("FAILED: adding build " + buildName + " to bundle: " + bundleName);
+                youTrackSite.failed(build);
+            }
+            youTrackCommandAction.addCommand(addedBuild);
+        }
+
 
         if(action != null) {
             List<String> issueIds = action.getIssueIds();
@@ -206,6 +239,11 @@ public class YouTrackBuildUpdater extends Recorder {
                 }
             }
             return autoCompletionCandidates;
+        }
+
+        @SuppressWarnings("UnusedDeclaration")
+        public AutoCompletionCandidates doAutoCompleteFieldBuildBundleToUpdate(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+            return YouTrackProjectProperty.getFields(project, value);
         }
     }
 }

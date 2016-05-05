@@ -247,21 +247,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteStateFieldName(@AncestorInPath AbstractProject project, @QueryParameter String value) {
-            YouTrackSite youTrackSite = YouTrackSite.get(project);
-            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if (youTrackSite != null) {
-                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if (user != null) {
-                    List<Field> fields = youTrackServer.getFields(user);
-                    for (Field field : fields) {
-                        if (field.getName().toLowerCase().contains(value.toLowerCase())) {
-                            autoCompletionCandidates.add(field.getName());
-                        }
-                    }
-                }
-            }
-            return autoCompletionCandidates;
+            return getFields(project, value);
         }
 
         @SuppressWarnings("UnusedDeclaration")
@@ -287,22 +273,44 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @SuppressWarnings("UnusedDeclaration")
         public AutoCompletionCandidates doAutoCompleteExecuteProjectLimits(@AncestorInPath AbstractProject project, @QueryParameter String value) {
-            YouTrackSite youTrackSite = YouTrackSite.get(project);
-            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if (youTrackSite != null) {
-                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if (user != null) {
-                    List<Project> projects = youTrackServer.getProjects(user);
-                    for (Project youtrackProject : projects) {
-                        if(youtrackProject.getShortName().toLowerCase().contains(value.toLowerCase())) {
-                            autoCompletionCandidates.add(youtrackProject.getShortName());
-                        }
+            return getProjects(project, value);
+        }
+    }
+
+    static AutoCompletionCandidates getProjects(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+        YouTrackSite youTrackSite = YouTrackSite.get(project);
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        if (youTrackSite != null) {
+            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            if (user != null) {
+                List<Project> projects = youTrackServer.getProjects(user);
+                for (Project youtrackProject : projects) {
+                    if(youtrackProject.getShortName().toLowerCase().contains(value.toLowerCase())) {
+                        autoCompletionCandidates.add(youtrackProject.getShortName());
                     }
                 }
             }
-            return autoCompletionCandidates;
         }
+        return autoCompletionCandidates;
+    }
+
+    public static AutoCompletionCandidates getFields(@AncestorInPath AbstractProject project, @QueryParameter String value) {
+        YouTrackSite youTrackSite = YouTrackSite.get(project);
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        if (youTrackSite != null) {
+            YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            if (user != null) {
+                List<Field> fields = youTrackServer.getFields(user);
+                for (Field field : fields) {
+                    if (field.getName().toLowerCase().contains(value.toLowerCase())) {
+                        autoCompletionCandidates.add(field.getName());
+                    }
+                }
+            }
+        }
+        return autoCompletionCandidates;
     }
 
     public static AutoCompletionCandidates getPossibleGroups(AbstractProject project, String value) {

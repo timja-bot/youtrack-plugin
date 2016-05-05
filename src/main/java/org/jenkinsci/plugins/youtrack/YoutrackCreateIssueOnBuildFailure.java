@@ -28,17 +28,29 @@ import java.util.List;
  * Post-build step to create an issue in Youtrack if the build fails.
  */
 public class YoutrackCreateIssueOnBuildFailure extends Notifier {
-    @Getter @Setter private String project;
-    @Getter @Setter private String summary;
-    @Getter @Setter private String description;
-    @Getter @Setter private String threshold;
-    @Getter @Setter private String visibility;
-    @Getter @Setter private String command;
-    @Getter @Setter private boolean attachBuildLog;
-
     public static final String FAILURE = "failure";
-
     public static final String FAILUREORUNSTABL = "failureOrUnstable";
+    @Getter
+    @Setter
+    private String project;
+    @Getter
+    @Setter
+    private String summary;
+    @Getter
+    @Setter
+    private String description;
+    @Getter
+    @Setter
+    private String threshold;
+    @Getter
+    @Setter
+    private String visibility;
+    @Getter
+    @Setter
+    private String command;
+    @Getter
+    @Setter
+    private boolean attachBuildLog;
 
     @DataBoundConstructor
     public YoutrackCreateIssueOnBuildFailure(String project, String summary, String description, String threshold, String visibility, String command, boolean attachBuildLog) {
@@ -111,6 +123,10 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
         return build.getAbsoluteUrl();
     }
 
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
+    }
+
     YouTrackServer getYouTrackServer(YouTrackSite youTrackSite) {
         return new YouTrackServer(youTrackSite.getUrl());
     }
@@ -118,7 +134,6 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
     YouTrackSite getYouTrackSite(AbstractBuild<?, ?> build) {
         return YouTrackSite.get(build.getProject());
     }
-
 
     private boolean shouldCreateIssue(AbstractBuild<?, ?> build) {
         Result result = build.getResult();
@@ -128,10 +143,6 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
             return false;
         }
         return true;
-    }
-
-    public BuildStepMonitor getRequiredMonitorService() {
-        return BuildStepMonitor.NONE;
     }
 
     @Extension
@@ -159,21 +170,7 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
         }
 
         public AutoCompletionCandidates doAutoCompleteProject(@AncestorInPath AbstractProject project, @QueryParameter String value) {
-            YouTrackSite youTrackSite = YouTrackSite.get(project);
-            AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-            if(youTrackSite != null) {
-                YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
-                if(user != null) {
-                    List<Project> groups = youTrackServer.getProjects(user);
-                    for (Project youtrackProject : groups) {
-                        if(youtrackProject.getShortName().toLowerCase().contains(value.toLowerCase())) {
-                            autoCompletionCandidates.add(youtrackProject.getShortName());
-                        }
-                    }
-                }
-            }
-            return autoCompletionCandidates;
+            return YouTrackProjectProperty.getProjects(project, value);
         }
 
     }
