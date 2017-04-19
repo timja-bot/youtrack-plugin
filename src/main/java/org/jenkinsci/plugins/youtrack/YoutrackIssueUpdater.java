@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.youtrack;
 
 import com.google.common.collect.ArrayListMultimap;
-import groovy.lang.Writable;
-import groovy.text.SimpleTemplateEngine;
-import groovy.text.Template;
-import groovy.text.TemplateEngine;
+import groovy.lang.Binding;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
@@ -17,18 +14,19 @@ import hudson.tasks.Mailer;
 import jenkins.model.Jenkins;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.gitclient.GitClient;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,9 +144,9 @@ public class YoutrackIssueUpdater {
         try {
             environment = build.getEnvironment(listener);
         } catch (IOException e) {
-            LOGGER.error(e, e);
+//            LOGGER.error(e, e);
         } catch (InterruptedException e) {
-            LOGGER.error(e, e);
+//            LOGGER.error(e, e);
         }
         if (youTrackSite.isCommentEnabled()) {
             ArrayListMultimap<Issue, ChangeLogSet.Entry> relatedChanges = ArrayListMultimap.create();
@@ -451,8 +449,9 @@ public class YoutrackIssueUpdater {
     private List<Command> addComment(AbstractBuild<?, ?> build, YouTrackSite youTrackSite, YouTrackServer youTrackServer, User user, Issue relatedIssue, List<ChangeLogSet.Entry> entries, BuildListener listener) {
         List<Command> commands = new ArrayList<Command>();
 
-        String commentText = youTrackSite.getCommentText();
-        if (StringUtils.isBlank(commentText)) {
+        SecureGroovyScript commentTextScript = youTrackSite.getCommentTextSecure();
+        String commentText = "";
+        if (StringUtils.isBlank(commentTextScript.getScript())) {
             StringBuilder stringBuilder = new StringBuilder("Related build: " + getAbsoluteUrlForBuild(build));
             for (ChangeLogSet.Entry entry : entries) {
                 stringBuilder.append("\nSHA: ").append(entry.getCommitId());
@@ -466,18 +465,14 @@ public class YoutrackIssueUpdater {
                 env.put("build", build);
                 env.put("entries", entries);
 
-                TemplateEngine templateEngine = new SimpleTemplateEngine();
-                Template template = templateEngine.createTemplate(commentText);
-                Writable make = template.make(env);
-                StringWriter out = new StringWriter();
-                make.writeTo(out);
-                commentText = out.toString();
-            } catch (IOException e) {
-                LOGGER.error(e);
-            } catch (ClassNotFoundException e) {
-                LOGGER.error(e);
-            } catch (InterruptedException e) {
-                LOGGER.error(e);
+
+                Binding binding = new Binding(env);
+                String result = (String) commentTextScript.evaluate(getClass().getClassLoader(), binding);
+
+                commentText = result;
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, e.getMessage(),e);
+
             }
         }
         Command comment;

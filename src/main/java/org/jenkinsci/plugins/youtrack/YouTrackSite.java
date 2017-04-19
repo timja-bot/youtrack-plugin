@@ -5,6 +5,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Result;
 import lombok.Getter;
 import lombok.Setter;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class YouTrackSite {
     @Getter @Setter private transient boolean commandsEnabled;
     @Getter @Setter private transient boolean commentEnabled;
     @Getter @Setter private transient String commentText;
+    @Getter @Setter private transient SecureGroovyScript commentTextSecure;
     @Getter @Setter private transient boolean annotationsEnabled;
     @Getter @Setter private transient String linkVisibility;
     @Getter @Setter private transient String stateFieldName;

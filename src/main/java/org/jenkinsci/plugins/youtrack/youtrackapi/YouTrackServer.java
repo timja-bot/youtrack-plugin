@@ -42,6 +42,15 @@ public class YouTrackServer {
      */
     private final String serverUrl;
 
+    /**
+     * Constructs a server.
+     *
+     * @param serverUrl the url of the server.
+     */
+    public YouTrackServer(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
     private static String getErrorMessage(InputStream errorStream) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream));
         String l;
@@ -65,101 +74,9 @@ public class YouTrackServer {
         return stringBuilder.toString();
     }
 
-    /**
-     * Constructs a server.
-     *
-     * @param serverUrl the url of the server.
-     */
-    public YouTrackServer(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-
     public Command createIssue(String siteName, User user, String project, String title, String description, String command, File attachment) {
         return createIssuePOST(siteName, user, project, title, description, command, attachment);
     }
-
-    private Command createIssuePOST(String siteName, User user, String project, String title, String description, String command, File attachment) {
-        Command cmd = new Command();
-        cmd.setCommand("[Create issue]");
-        cmd.setDate(new Date());
-        cmd.setSiteName(siteName);
-
-        if (user == null || !user.isLoggedIn()) {
-            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
-            return null;
-        }
-
-        cmd.setStatus(Command.Status.FAILED);
-        try {
-            String params = "project=" + URLEncoder.encode(project, "UTF-8") + "&summary=" + URLEncoder.encode(title, "UTF-8") + "&description=" + URLEncoder.encode(description, "UTF-8");
-
-            // Against documentation. This call is supposed to be PUT, but only POST is working.
-            PostMethod postMethod = new PostMethod(serverUrl + "/rest/issue");
-
-            for (String cookie : user.getCookies()) {
-                postMethod.addRequestHeader("Cookie", cookie);
-            }
-
-            List<Part> parts = new ArrayList<Part>();
-            parts.add(new StringPart("project", project, "UTF-8"));
-            parts.add(new StringPart("summary", title, "UTF-8"));
-            parts.add(new StringPart("description", description, "UTF-8"));
-            if (attachment != null) {
-                parts.add(new FilePart("attachment", attachment));
-            }
-            Part[] partsArray = {};
-            Part[] array = parts.toArray(partsArray);
-            postMethod.setRequestEntity(new MultipartRequestEntity(array, new HttpMethodParams()));
-
-            HttpClient httpClient = new HttpClient();
-            int responseCode = httpClient.executeMethod(postMethod);
-            // Because we're varying in the POST vs. PUT call, check for a couple possible
-            // success responses, though currently I'm only ever seeing 200 returned.
-            if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream()));
-                StringBuilder stringBuilder = new StringBuilder();
-                for (String l = null; (l = bufferedReader.readLine()) != null; ) {
-                    stringBuilder.append(l).append("\n");
-                }
-
-                try {
-                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-                    SAXParser saxParser = saxParserFactory.newSAXParser();
-                    CreateIssueHandler handler = new CreateIssueHandler();
-                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), handler);
-                    String issueId = handler.issueId;
-
-                    LOGGER.log(Level.INFO, "Created issue " + issueId);
-
-                    if (issueId != null) {
-                        Issue issue = new Issue(issueId);
-                        if (StringUtils.isNotBlank(command)) {
-                            applyCommand(siteName, user, issue, command, "", null, null, false);
-                            cmd.setCommand(command);
-                        }
-                        cmd.setIssueId(issueId);
-                    }
-                } catch (Exception e) {
-                    cmd.setCommand("[Unable to apply command]");
-                }
-
-                cmd.setStatus(Command.Status.OK);
-
-                return cmd;
-            }
-
-            cmd.setResponse(getErrorMessage(postMethod.getResponseBodyAsStream()));
-            LOGGER.log(Level.WARNING, "Did not create issue: " + cmd.getResponse());
-        } catch (MalformedURLException e) {
-            cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Did not create issue", e);
-        } catch (IOException e) {
-            cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Did not create issue", e);
-        }
-        return cmd;
-    }
-
 
     public List<Group> getGroups(User user) {
         List<Group> groups = new ArrayList<Group>();
@@ -274,13 +191,14 @@ public class YouTrackServer {
         }
         return null;
     }
+
     public String getBuildBundleNameForField(User user, String projectId, String fieldName) {
         try {
 
             String encodedProjectId = URLEncoder.encode(projectId, "ISO-8859-1").replace("+", "%20");
             String encodedFieldName = URLEncoder.encode(fieldName, "ISO-8859-1").replace("+", "%20");
 
-            String fieldUrl = serverUrl + "/rest/admin/project/"+encodedProjectId+"/customfield/" + encodedFieldName;
+            String fieldUrl = serverUrl + "/rest/admin/project/" + encodedProjectId + "/customfield/" + encodedFieldName;
             URL url = new URL(fieldUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 
@@ -457,13 +375,15 @@ public class YouTrackServer {
     /**
      * Apply a command to an issue.
      *
-     * @param user    the user used to apply the command, shall be one with cookies set.
-     * @param issue   the issue to apply the command to.
-     * @param command the command to apply.
-     * @param comment comment with the command, null is allowed.
-     * @param group   the visibility group for the command.
-     * @param runAs   user to apply the command as, null is allowed.
-     * @param notify  notifies watchers.
+     * @param siteName name of site.
+     * @param user     the user used to apply the command, shall be one with cookies set.
+     * @param issue    the issue to apply the command to.
+     * @param command  the command to apply.
+     * @param comment  comment with the command, null is allowed.
+     * @param group    the visibility group for the command.
+     * @param runAs    user to apply the command as, null is allowed.
+     * @param notify   notifies watchers.
+     * @return the command.
      */
     public Command applyCommand(String siteName, User user, Issue issue, String command, String comment, String group, User runAs, boolean notify) {
         Command cmd = new Command();
@@ -664,11 +584,12 @@ public class YouTrackServer {
 
     /**
      * Gets an issue by issue id.
-     * <p/>
+     * <p></p>
      * Currently the only value retrieved is the State field.
      *
-     * @param user    the user session.
-     * @param issueId the id of the issue.
+     * @param user       the user session.
+     * @param issueId    the id of the issue.
+     * @param stateField the state field.
      * @return the issue if any.
      */
     public Issue getIssue(User user, String issueId, String stateField) {
@@ -822,6 +743,88 @@ public class YouTrackServer {
             LOGGER.log(Level.WARNING, "Could not find issues", e);
         }
         return new ArrayList<Suggestion>();
+    }
+
+    private Command createIssuePOST(String siteName, User user, String project, String title, String description, String command, File attachment) {
+        Command cmd = new Command();
+        cmd.setCommand("[Create issue]");
+        cmd.setDate(new Date());
+        cmd.setSiteName(siteName);
+
+        if (user == null || !user.isLoggedIn()) {
+            cmd.setStatus(Command.Status.NOT_LOGGED_IN);
+            return null;
+        }
+
+        cmd.setStatus(Command.Status.FAILED);
+        try {
+            String params = "project=" + URLEncoder.encode(project, "UTF-8") + "&summary=" + URLEncoder.encode(title, "UTF-8") + "&description=" + URLEncoder.encode(description, "UTF-8");
+
+            // Against documentation. This call is supposed to be PUT, but only POST is working.
+            PostMethod postMethod = new PostMethod(serverUrl + "/rest/issue");
+
+            for (String cookie : user.getCookies()) {
+                postMethod.addRequestHeader("Cookie", cookie);
+            }
+
+            List<Part> parts = new ArrayList<Part>();
+            parts.add(new StringPart("project", project, "UTF-8"));
+            parts.add(new StringPart("summary", title, "UTF-8"));
+            parts.add(new StringPart("description", description, "UTF-8"));
+            if (attachment != null) {
+                parts.add(new FilePart("attachment", attachment));
+            }
+            Part[] partsArray = {};
+            Part[] array = parts.toArray(partsArray);
+            postMethod.setRequestEntity(new MultipartRequestEntity(array, new HttpMethodParams()));
+
+            HttpClient httpClient = new HttpClient();
+            int responseCode = httpClient.executeMethod(postMethod);
+            // Because we're varying in the POST vs. PUT call, check for a couple possible
+            // success responses, though currently I'm only ever seeing 200 returned.
+            if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream()));
+                StringBuilder stringBuilder = new StringBuilder();
+                for (String l = null; (l = bufferedReader.readLine()) != null; ) {
+                    stringBuilder.append(l).append("\n");
+                }
+
+                try {
+                    SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+                    SAXParser saxParser = saxParserFactory.newSAXParser();
+                    CreateIssueHandler handler = new CreateIssueHandler();
+                    saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), handler);
+                    String issueId = handler.issueId;
+
+                    LOGGER.log(Level.INFO, "Created issue " + issueId);
+
+                    if (issueId != null) {
+                        Issue issue = new Issue(issueId);
+                        if (StringUtils.isNotBlank(command)) {
+                            applyCommand(siteName, user, issue, command, "", null, null, false);
+                            cmd.setCommand(command);
+                        }
+                        cmd.setIssueId(issueId);
+                    }
+                } catch (Exception e) {
+                    cmd.setCommand("[Unable to apply command]");
+                }
+
+                cmd.setStatus(Command.Status.OK);
+
+                return cmd;
+            }
+
+            cmd.setResponse(getErrorMessage(postMethod.getResponseBodyAsStream()));
+            LOGGER.log(Level.WARNING, "Did not create issue: " + cmd.getResponse());
+        } catch (MalformedURLException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
+        } catch (IOException e) {
+            cmd.setResponse(e.getMessage());
+            LOGGER.log(Level.WARNING, "Did not create issue", e);
+        }
+        return cmd;
     }
 
     private static class VersionHandler extends DefaultHandler {

@@ -1,7 +1,6 @@
 package org.jenkinsci.plugins.youtrack;
 
 import jenkins.model.Jenkins;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.HashSet;
@@ -11,7 +10,6 @@ import java.util.Set;
  * This is a class to persist the commit ids processed by the YouTrack plugin for Jenkins
  */
 public class YoutrackProcessedRevisionsSaver {
-    private static final Logger LOGGER = Logger.getLogger(YoutrackProcessedRevisionsSaver.class.getName());
 
 
     public Set<String> processedIds;
@@ -29,10 +27,10 @@ public class YoutrackProcessedRevisionsSaver {
             try {
                 boolean newFile = file.createNewFile();
                 if (!newFile) {
-                    LOGGER.error("Could not create youtrack processed file");
+//                    LOGGER.error("Could not create youtrack processed file");
                 }
             } catch (IOException e) {
-                LOGGER.error("Could not create youtrack processed file", e);
+//                LOGGER.error("Could not create youtrack processed file", e);
             }
         } else {
             try {
@@ -45,9 +43,9 @@ public class YoutrackProcessedRevisionsSaver {
                 }
                 fileInputStream.close();
             } catch (FileNotFoundException e) {
-                LOGGER.error("Could not load youtrack processed file", e);
+//                LOGGER.error("Could not load youtrack processed file", e);
             } catch (IOException e) {
-                LOGGER.error("Could not load youtrack processed file", e);
+//                LOGGER.error("Could not load youtrack processed file", e);
             }
         }
 
@@ -64,7 +62,7 @@ public class YoutrackProcessedRevisionsSaver {
             fileWriter.append(revisionId).append("\n");
             fileWriter.close();
         } catch (IOException e) {
-            LOGGER.error("Could not write to youtrack processed file", e);
+//            LOGGER.error("Could not write to youtrack processed file", e);
         }
     }
 }

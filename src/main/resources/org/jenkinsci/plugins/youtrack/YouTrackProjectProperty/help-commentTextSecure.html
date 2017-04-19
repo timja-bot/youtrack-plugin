@@ -1,0 +1,19 @@
+<p>
+    The text for the comment to send to YouTrack for linking back to this build. It defaults to the URL for the build
+    and
+    the revision id(s) for the change(s). Setting a text here overrides that.
+</p>
+<p>The text you enter is executed as a Groovy script</p>
+<p> There are two variables available: build and entries, where build is an object of type <a
+        href="http://javadoc.jenkins-ci.org/hudson/model/AbstractBuild.html"><code>hudson.model.AbstractBuild</code></a>
+    and entries is a list of <a
+            href="http://javadoc.jenkins-ci.org/hudson/scm/ChangeLogSet.Entry.html"><code>hudson.scm.ChangeLogSet.Entry</code></a>
+    objects. Therefore a template can be something like:
+<pre>
+    def result = ""
+    result += "Related build: $build.absoluteUrl\n"
+    entries.each {
+        result += "[Change: ${it.commitId}|http://sourcecodebrowser?change=${it.commitId}]\n"
+    }
+    result
+</pre>

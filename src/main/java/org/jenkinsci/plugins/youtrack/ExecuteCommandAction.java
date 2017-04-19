@@ -15,7 +15,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Suggestion;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
@@ -31,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,17 +70,15 @@ public class ExecuteCommandAction extends Builder {
                     try {
                         String changes = createChangesString(build,listener);
                         environment.put("YOUTRACK_CHANGES", changes);
-                    } catch (InvocationTargetException e) {
-                        LOGGER.error(e);
-                    } catch (IllegalAccessException e) {
-                        LOGGER.error(e);
+                    } catch (InvocationTargetException | IllegalAccessException e) {
+                        LOGGER.severe(e.getMessage());
                     }
 
                     String searchQuery = environment.expand(search);
                     String commandToExecute = environment.expand(command);
                     String expandedIssueInText = environment.expand(issueInText);
 
-                    Set<Issue> issues = new HashSet<Issue>();
+                    Set<Issue> issues = new HashSet<>();
                     if (StringUtils.isNotBlank(searchQuery)) {
                         issues.addAll(youTrackServer.search(user, searchQuery));
                     }
@@ -127,10 +126,8 @@ public class ExecuteCommandAction extends Builder {
         EnvVars environment = null;
         try {
             environment = build.getEnvironment(listener);
-        } catch (IOException e) {
-            LOGGER.error(e,e);
-        } catch (InterruptedException e) {
-            LOGGER.error(e,e);
+        } catch (IOException | InterruptedException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(),e);
         }
         if (changeSet != null) {
             for (ChangeLogSet.Entry entry : changeSet) {

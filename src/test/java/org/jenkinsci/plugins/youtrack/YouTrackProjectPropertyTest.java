@@ -23,7 +23,8 @@ public class YouTrackProjectPropertyTest {
         FreeStyleProject project1 = j.createFreeStyleProject(projectName);
         HtmlPage configurePage = j.createWebClient().goTo("job/" + projectName + "/configure");
         HtmlForm form = configurePage.getFormByName("config");
-        form.submit((HtmlButton)j.last(form.getHtmlElementsByTagName("button")));
+        HtmlButton button = (HtmlButton) j.last(form.getHtmlElementsByTagName("button"));
+        button.click();
     }
 
     @Test
@@ -37,11 +38,12 @@ public class YouTrackProjectPropertyTest {
         addButton.click();
         HtmlElement nameInput = youtrackSitesSection.getOneHtmlElementByAttribute("input", "name", "youtrack.name");
 
-        form.submit((HtmlButton) j.last(form.getHtmlElementsByTagName("button")));
+        HtmlButton button = (HtmlButton) j.last(form.getHtmlElementsByTagName("button"));
+        button.click();
     }
 
     private HtmlElement youtrackSitesSection(HtmlPage globalConfiguration) {
-        HtmlElement mainPanel = globalConfiguration.getElementById("main-panel");
+        HtmlElement mainPanel = globalConfiguration.getHtmlElementById("main-panel");
         List<HtmlElement> settings = mainPanel.getElementsByAttribute("td", "class", "setting-name");
         for (HtmlElement setting : settings) {
             if (setting.getTextContent().equals("YouTrack sites")) {

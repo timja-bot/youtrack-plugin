@@ -7,6 +7,7 @@ import hudson.util.FormValidation;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
 import org.jenkinsci.plugins.youtrack.youtrackapi.*;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
@@ -41,6 +42,10 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
      * The text to use for ping back comments
      */
     @Getter @Setter private String commentText;
+    /**
+     * The text to use for ping back comments
+     */
+    @Getter @Setter private SecureGroovyScript commentTextSecure;
     /**
      * If executing commands is enabled.
      */
@@ -101,7 +106,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String commentText, YoutrackBuildFailureMode failureMode) {
+    public YouTrackProjectProperty(String siteName, boolean pluginEnabled, boolean commentsEnabled, boolean commandsEnabled, boolean runAsEnabled, boolean annotationsEnabled, String linkVisibility, String stateFieldName, String fixedValues, boolean silentCommands, boolean silentLinks, String executeProjectLimits, boolean trackCommits, String project, String commentText, YoutrackBuildFailureMode failureMode, SecureGroovyScript commentTextSecure) {
         this.siteName = siteName;
         this.pluginEnabled = pluginEnabled;
         this.commentsEnabled = commentsEnabled;
@@ -117,6 +122,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         this.trackCommits = trackCommits;
         this.project = project;
         this.commentText = commentText;
+        this.commentTextSecure = commentTextSecure;
         this.failureMode = failureMode;
         this.prefixCommandPairs = new ArrayList<PrefixCommandPair>();
     }
@@ -152,18 +158,20 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         @Override
         public JobProperty<?> newInstance(StaplerRequest req, JSONObject formData) throws FormException {
 
-            YouTrackProjectProperty ypp = req.bindParameters(YouTrackProjectProperty.class, "youtrack.");
-            if (ypp.siteName == null) {
-                return null;
-            }
-
-            if (formData != null) {
-                JSONObject enabled = (JSONObject) formData.get("pluginEnabled");
-                if (enabled != null) {
-                    Object prefixCommandArray = enabled.get("prefixCommandPairs");
-                    List<PrefixCommandPair> commandPairs = req.bindJSONToList(PrefixCommandPair.class, prefixCommandArray);
-                    ypp.setPrefixCommandPairs(commandPairs);
+            JSONObject pluginEnabled = (JSONObject) formData.get("pluginEnabled");
+            YouTrackProjectProperty ypp = null;
+            if (pluginEnabled != null) {
+                ypp = req.bindJSON(YouTrackProjectProperty.class, pluginEnabled);
+                if (ypp.siteName == null) {
+                    return null;
                 }
+
+                ypp.commentTextSecure.configuringWithKeyItem();
+
+                ypp.setPluginEnabled(true);
+                Object prefixCommandArray = pluginEnabled.get("prefixCommandPairs");
+                List<PrefixCommandPair> commandPairs = req.bindJSONToList(PrefixCommandPair.class, prefixCommandArray);
+                ypp.setPrefixCommandPairs(commandPairs);
             }
 
 
@@ -172,6 +180,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) {
+
             sites.replaceBy(req.bindParametersToList(YouTrackSite.class, "youtrack."));
             save();
             return true;
@@ -360,6 +369,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setProject(project);
             result.setPrefixCommandPairs(prefixCommandPairs);
             result.setCommentText(commentText);
+            result.setCommentTextSecure(commentTextSecure);
             result.setFailureMode(failureMode);
         }
         return result;

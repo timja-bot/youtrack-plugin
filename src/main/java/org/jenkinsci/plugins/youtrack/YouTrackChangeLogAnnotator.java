@@ -7,7 +7,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.scm.ChangeLogAnnotator;
 import hudson.scm.ChangeLogSet;
-import org.apache.log4j.Logger;
 
 import java.util.List;
 import java.util.Random;
@@ -16,7 +15,6 @@ import java.util.regex.Pattern;
 
 @Extension
 public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
-    private static final Logger LOGGER = Logger.getLogger(YouTrackChangeLogAnnotator.class.getName());
 
     @Override
     public void annotate(AbstractBuild<?, ?> abstractBuild, ChangeLogSet.Entry entry, MarkupText markupText) {
