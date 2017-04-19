@@ -44,21 +44,6 @@
         </dependency>
 
         <dependency>
-            <!-- Solves a java.lang.NoClassDefFoundError: org/apache/commons/io/input/AutoCloseInputStream from hudson.ExtensionFinder$GuiceFinder
-                 that is encountered when pulling in lombok. See
-                 http://www.mkyong.com/struts/java-lang-noclassdeffounderror-orgapachecommonsiooutputdeferredfileoutputstream/ -->
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>1.4</version>
-        </dependency>
-        <dependency>
-            <!-- There is a bug in an older version of stapler that causes a maven build error if we pull in lombok.
-                 Therefore, we force a dependency on a newer version of stapler.  See https://issues.jenkins-ci.org/browse/JENKINS-11739 -->
-            <groupId>org.kohsuke.stapler</groupId>
-            <artifactId>stapler</artifactId>
-            <version>[1.199,)</version>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.14.4</version>

@@ -451,7 +451,7 @@ public class YoutrackIssueUpdater {
 
         SecureGroovyScript commentTextScript = youTrackSite.getCommentTextSecure();
         String commentText = "";
-        if (StringUtils.isBlank(commentTextScript.getScript())) {
+        if (commentTextScript == null || StringUtils.isBlank(commentTextScript.getScript())) {
             StringBuilder stringBuilder = new StringBuilder("Related build: " + getAbsoluteUrlForBuild(build));
             for (ChangeLogSet.Entry entry : entries) {
                 stringBuilder.append("\nSHA: ").append(entry.getCommitId());
