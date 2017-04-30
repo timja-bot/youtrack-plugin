@@ -41,4 +41,9 @@ public class YouTrackSCMListener extends SCMListener {
     public boolean equals(Object obj) {
         return obj != null && obj instanceof YouTrackSCMListener;
     }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }

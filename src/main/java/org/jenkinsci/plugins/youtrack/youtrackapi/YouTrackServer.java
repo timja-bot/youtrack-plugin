@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,11 +53,12 @@ public class YouTrackServer {
     }
 
     private static String getErrorMessage(InputStream errorStream) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream));
-        String l;
         StringBuilder stringBuilder = new StringBuilder();
-        while ((l = bufferedReader.readLine()) != null) {
-            stringBuilder.append(l).append("\n");
+        try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
+            String l;
+            while ((l = bufferedReader.readLine()) != null) {
+                stringBuilder.append(l).append("\n");
+            }
         }
         try {
             SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
@@ -64,9 +66,7 @@ public class YouTrackServer {
             ErrorHandler errorHandler = new ErrorHandler();
             saxParser.parse(new InputSource(new StringReader(stringBuilder.toString())), errorHandler);
             return errorHandler.errorMessage;
-        } catch (ParserConfigurationException e) {
-            LOGGER.log(Level.WARNING, "Could not parse error response", e);
-        } catch (SAXException e) {
+        } catch (ParserConfigurationException | SAXException e) {
             LOGGER.log(Level.WARNING, "Could not parse error response", e);
         }
 
@@ -347,15 +347,16 @@ public class YouTrackServer {
                 }
             }
 
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.write("comment=" + URLEncoder.encode(comment, "UTF-8"));
-            if (group != null && !group.equals("")) {
-                outputStreamWriter.write("&group=" + group);
-            }
-            if (silent) {
-                outputStreamWriter.write("&disableNotifications=" + true);
-            }
-            outputStreamWriter.flush();
+            try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets.UTF_8)) {
+                outputStreamWriter.write("comment=" + URLEncoder.encode(comment, "UTF-8"));
+                if (group != null && !group.equals("")) {
+                    outputStreamWriter.write("&group=" + group);
+                }
+                if (silent) {
+                    outputStreamWriter.write("&disableNotifications=" + true);
+                }
+                outputStreamWriter.flush();
+            };
 
             int responseCode = urlConnection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -412,24 +413,23 @@ public class YouTrackServer {
                 urlConnection.setRequestProperty("Cookie", cookie);
             }
 
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-
-
-            String str = "command=" + URLEncoder.encode(command, "UTF-8");
-            if (comment != null) {
-                str += "&comment=" + URLEncoder.encode(comment, "UTF-8");
+            try(OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets.UTF_8)) {
+                String str = "command=" + URLEncoder.encode(command, "UTF-8");
+                if (comment != null) {
+                    str += "&comment=" + URLEncoder.encode(comment, "UTF-8");
+                }
+                if (runAs != null) {
+                    str += "&runAs=" + runAs.getUsername();
+                }
+                if (!notify) {
+                    str += "&disableNotifications=true";
+                }
+                if (group != null) {
+                    str += "&group=" + URLEncoder.encode(group, "UTF-8");
+                }
+                outputStreamWriter.write(str);
+                outputStreamWriter.flush();
             }
-            if (runAs != null) {
-                str += "&runAs=" + runAs.getUsername();
-            }
-            if (!notify) {
-                str += "&disableNotifications=true";
-            }
-            if (group != null) {
-                str += "&group=" + URLEncoder.encode(group, "UTF-8");
-            }
-            outputStreamWriter.write(str);
-            outputStreamWriter.flush();
 
             int responseCode = urlConnection.getResponseCode();
 
@@ -500,9 +500,10 @@ public class YouTrackServer {
 
             urlConnection.setDoOutput(true);
             urlConnection.setDoInput(true);
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.write("login=" + username + "&password=" + password);
-            outputStreamWriter.flush();
+            try(OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets.UTF_8)) {
+                outputStreamWriter.write("login=" + username + "&password=" + password);
+                outputStreamWriter.flush();
+            }
 
             int responseCode = urlConnection.getResponseCode();
 
@@ -519,8 +520,6 @@ public class YouTrackServer {
 
                 return user;
             }
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not login", e);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not login", e);
         }
@@ -560,8 +559,9 @@ public class YouTrackServer {
             }
             urlConnection.setDoOutput(true);
             urlConnection.setDoInput(true);
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream());
-            outputStreamWriter.flush();
+            try(OutputStreamWriter outputStreamWriter = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets.UTF_8)) {
+                outputStreamWriter.flush();
+            };
 
 
             int responseCode = urlConnection.getResponseCode();
@@ -572,9 +572,6 @@ public class YouTrackServer {
 
             cmd.setStatus(Command.Status.FAILED);
             cmd.setResponse(getErrorMessage(urlConnection.getErrorStream()));
-        } catch (MalformedURLException e) {
-            cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Could not add to bundle", e);
         } catch (IOException e) {
             cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Could not add to bundle", e);
@@ -609,15 +606,11 @@ public class YouTrackServer {
                     Issue.IssueHandler issueHandler = new Issue.IssueHandler(stateField);
                     saxParser.parse(urlConnection.getInputStream(), issueHandler);
                     return issueHandler.getIssue();
-                } catch (ParserConfigurationException e) {
-                    LOGGER.log(Level.WARNING, "Could not get issue", e);
-                } catch (SAXException e) {
+                } catch (ParserConfigurationException | SAXException e) {
                     LOGGER.log(Level.WARNING, "Could not get issue", e);
                 }
             }
 
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not get issue", e);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not get issue", e);
         }
@@ -634,13 +627,9 @@ public class YouTrackServer {
                     SAXParser saxParser = saxParserFactory.newSAXParser();
                     VersionHandler versionHandler = new VersionHandler();
                     saxParser.parse(urlConnection.getInputStream(), versionHandler);
-                    return versionHandler.version.split(".");
+                    return versionHandler.version.split("\\.");
                 }
-            } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Could not get version", e);
-            } catch (ParserConfigurationException e) {
-                LOGGER.log(Level.WARNING, "Could not get version", e);
-            } catch (SAXException e) {
+            } catch (IOException | ParserConfigurationException | SAXException e) {
                 LOGGER.log(Level.WARNING, "Could not get version", e);
             }
         } catch (MalformedURLException e) {
@@ -666,15 +655,11 @@ public class YouTrackServer {
                     BuildBundle.Handler issueHandler = new BuildBundle.Handler();
                     saxParser.parse(urlConnection.getInputStream(), issueHandler);
                     return issueHandler.getBundles();
-                } catch (ParserConfigurationException e) {
-                    LOGGER.log(Level.WARNING, "Could not get issue", e);
-                } catch (SAXException e) {
+                } catch (ParserConfigurationException | SAXException e) {
                     LOGGER.log(Level.WARNING, "Could not get issue", e);
                 }
             }
 
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not get issue", e);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not get issue", e);
         }
@@ -698,15 +683,11 @@ public class YouTrackServer {
                     Issue.IssueSearchHandler issueSearchHandler = new Issue.IssueSearchHandler();
                     saxParser.parse(urlConnection.getInputStream(), issueSearchHandler);
                     return issueSearchHandler.getIssueList();
-                } catch (ParserConfigurationException e) {
-                    LOGGER.log(Level.WARNING, "Could not find issues", e);
-                } catch (SAXException e) {
+                } catch (ParserConfigurationException | SAXException e) {
                     LOGGER.log(Level.WARNING, "Could not find issues", e);
                 }
             }
 
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not find issues", e);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not find issues", e);
         }
@@ -730,19 +711,15 @@ public class YouTrackServer {
                     Issue.IssueSearchSuggestionHandler issueSearchHandler = new Issue.IssueSearchSuggestionHandler();
                     saxParser.parse(urlConnection.getInputStream(), issueSearchHandler);
                     return issueSearchHandler.getSuggestions();
-                } catch (ParserConfigurationException e) {
-                    LOGGER.log(Level.WARNING, "Could not find issues", e);
-                } catch (SAXException e) {
+                } catch (ParserConfigurationException | SAXException e) {
                     LOGGER.log(Level.WARNING, "Could not find issues", e);
                 }
             }
 
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Could not find issues", e);
         } catch (IOException e) {
             LOGGER.log(Level.WARNING, "Could not find issues", e);
         }
-        return new ArrayList<Suggestion>();
+        return new ArrayList<>();
     }
 
     private Command createIssuePOST(String siteName, User user, String project, String title, String description, String command, File attachment) {
@@ -767,7 +744,7 @@ public class YouTrackServer {
                 postMethod.addRequestHeader("Cookie", cookie);
             }
 
-            List<Part> parts = new ArrayList<Part>();
+            List<Part> parts = new ArrayList<>();
             parts.add(new StringPart("project", project, "UTF-8"));
             parts.add(new StringPart("summary", title, "UTF-8"));
             parts.add(new StringPart("description", description, "UTF-8"));
@@ -783,11 +760,12 @@ public class YouTrackServer {
             // Because we're varying in the POST vs. PUT call, check for a couple possible
             // success responses, though currently I'm only ever seeing 200 returned.
             if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream()));
                 StringBuilder stringBuilder = new StringBuilder();
-                for (String l = null; (l = bufferedReader.readLine()) != null; ) {
-                    stringBuilder.append(l).append("\n");
-                }
+                try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream(), StandardCharsets.UTF_8))) {
+                    for (String l = null; (l = bufferedReader.readLine()) != null; ) {
+                        stringBuilder.append(l).append("\n");
+                    }
+                };
 
                 try {
                     SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
@@ -806,6 +784,8 @@ public class YouTrackServer {
                         }
                         cmd.setIssueId(issueId);
                     }
+                } catch (RuntimeException e) {
+                    cmd.setCommand("[Unable to apply command]");
                 } catch (Exception e) {
                     cmd.setCommand("[Unable to apply command]");
                 }
@@ -817,9 +797,6 @@ public class YouTrackServer {
 
             cmd.setResponse(getErrorMessage(postMethod.getResponseBodyAsStream()));
             LOGGER.log(Level.WARNING, "Did not create issue: " + cmd.getResponse());
-        } catch (MalformedURLException e) {
-            cmd.setResponse(e.getMessage());
-            LOGGER.log(Level.WARNING, "Did not create issue", e);
         } catch (IOException e) {
             cmd.setResponse(e.getMessage());
             LOGGER.log(Level.WARNING, "Did not create issue", e);

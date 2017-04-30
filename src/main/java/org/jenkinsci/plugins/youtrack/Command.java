@@ -21,6 +21,14 @@ public class Command {
     @Getter @Setter private String response;
     @Getter @Setter private Status status;
     @Getter @Setter private String group;
-    @Getter @Setter private Date date;
+    private Date date;
     @Getter @Setter private boolean silent;
+
+    public Date getDate() {
+        return new Date(date.getTime());
+    }
+
+    public void setDate(Date date) {
+        this.date = new Date(date.getTime());
+    }
 }

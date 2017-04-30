@@ -64,7 +64,12 @@ public class YouTrackChangeLogAnnotator extends ChangeLogAnnotator {
     }
 
     String getRootUrl() {
-        return Hudson.getInstance().getRootUrl();
+        Hudson instance = Hudson.getInstance();
+        if (instance != null) {
+            return instance.getRootUrl();
+        } else {
+            return "";
+        }
     }
 
     YouTrackSite getSiteForProject(AbstractProject<?, ?> project) {

@@ -8,12 +8,13 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-import hudson.util.CopyOnWriteList;
 import lombok.Getter;
 import lombok.Setter;
 import net.sf.json.JSONObject;
-import org.jenkinsci.plugins.youtrack.youtrackapi.*;
+import org.jenkinsci.plugins.youtrack.youtrackapi.BuildBundle;
+import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
+import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -140,17 +141,7 @@ public class YouTrackBuildUpdater extends Recorder {
 
         }
 
-
-        List<String> projectIds = new ArrayList<String>();
-        if (action != null) {
-            List<String> issueIds = action.getIssueIds();
-            for (String issueId : issueIds) {
-                String[] split = issueId.split("\\-");
-                projectIds.add(split[0]);
-            }
-        }
-
-        Set<String> bundleNames = new HashSet<String>();
+        Set<String> bundleNames = new HashSet<>();
         if (bundles != null) {
             for (BundleFieldProject bundleFieldProject : bundles) {
                 String inputBundleName = youTrackServer.getBuildBundleNameForField(user, bundleFieldProject.getProjectId(), bundleFieldProject.getFieldName());
@@ -160,7 +151,7 @@ public class YouTrackBuildUpdater extends Recorder {
                 }
             }
         }
-        if (buildName != null && buildName.length() != 0) {
+        if (bundleName != null && bundleName.length() != 0) {
             bundleNames.add(environment.expand(getBundleName()));
         }
 
@@ -182,26 +173,33 @@ public class YouTrackBuildUpdater extends Recorder {
 
         if (action != null) {
             List<String> issueIds = action.getIssueIds();
-            boolean stable = build.getResult().isBetterOrEqualTo(Result.SUCCESS);
-            boolean unstable = build.getResult().isBetterOrEqualTo(Result.UNSTABLE);
 
 
-            if (stable || (isMarkFixedIfUnstable() && unstable)) {
+            Result result = build.getResult();
+            if (result != null) {
 
-                for (String issueId : issueIds) {
-                    Issue issue = new Issue(issueId);
 
-                    environment.put("YOUTRACK_BUILD_NAME", buildName);
+                boolean stable = result.isBetterOrEqualTo(Result.SUCCESS);
+                boolean unstable = result.isBetterOrEqualTo(Result.UNSTABLE);
 
-                    String commandValue = environment.expand(buildUpdateCommand);
-                    Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, null, !runSilently);
-                    if (command.getStatus() == Command.Status.OK) {
-                        listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
-                    } else {
-                        youTrackSite.failed(build);
-                        listener.getLogger().println("FAILED: updating Fixed in build to " + buildName + " for " + issueId);
+
+                if (stable || (isMarkFixedIfUnstable() && unstable)) {
+
+                    for (String issueId : issueIds) {
+                        Issue issue = new Issue(issueId);
+
+                        environment.put("YOUTRACK_BUILD_NAME", buildName);
+
+                        String commandValue = environment.expand(buildUpdateCommand);
+                        Command command = youTrackServer.applyCommand(youTrackSite.getName(), user, issue, commandValue, null, null, null, !runSilently);
+                        if (command.getStatus() == Command.Status.OK) {
+                            listener.getLogger().println("Updated Fixed in build to " + buildName + " for " + issueId);
+                        } else {
+                            youTrackSite.failed(build);
+                            listener.getLogger().println("FAILED: updating Fixed in build to " + buildName + " for " + issueId);
+                        }
+                        youTrackCommandAction.addCommand(command);
                     }
-                    youTrackCommandAction.addCommand(command);
                 }
             }
 

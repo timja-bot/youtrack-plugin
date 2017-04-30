@@ -17,23 +17,33 @@ public class Issue {
     /**
      * The id of the issue.
      */
-    @Getter @Setter private String id;
+    @Getter
+    @Setter
+    private String id;
     /**
      * The state of the issue.
      */
-    @Getter @Setter private String state;
+    @Getter
+    @Setter
+    private String state;
 
     /**
      * Title of issue.
      */
-    @Getter @Setter private String summary;
+    @Getter
+    @Setter
+    private String summary;
 
-    @Getter @Setter private String resolved;
+    @Getter
+    @Setter
+    private String resolved;
 
     /**
      * Summary of issue.
      */
-    @Getter @Setter private String description;
+    @Getter
+    @Setter
+    private String description;
 
     /**
      * Constructs an issue object with the given id.
@@ -83,7 +93,8 @@ public class Issue {
         /**
          * Holder for the result.
          */
-        @Getter private Issue issue;
+        @Getter
+        private Issue issue;
 
         /**
          * State field name.
@@ -93,7 +104,7 @@ public class Issue {
 
         public IssueHandler(String stateFieldName) {
             this.stateFieldName = stateFieldName;
-            if(stateFieldName == null || stateFieldName.equals("")) {
+            if (stateFieldName == null || stateFieldName.equals("")) {
                 this.stateFieldName = "State";
             }
         }
@@ -166,20 +177,24 @@ public class Issue {
         private int matchEnd;
 
         private StringBuilder stringBuilder = new StringBuilder();
-        private boolean inItem;
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
             super.startElement(uri, localName, qName, attributes);
             stringBuilder.setLength(0);
-            if (qName.equals("item")) {
-                inItem = true;
-            } else if(qName.equals("completion")) {
-                completionStart = Integer.parseInt(attributes.getValue("start"));
-                completionEnd = Integer.parseInt(attributes.getValue("end"));
-            } else if (qName.equals("match")) {
-                matchStart = Integer.parseInt(attributes.getValue("start"));
-                matchEnd = Integer.parseInt(attributes.getValue("end"));
+            switch (qName) {
+                case "item":
+                    break;
+                case "completion":
+                    completionStart = Integer.parseInt(attributes.getValue("start"));
+                    completionEnd = Integer.parseInt(attributes.getValue("end"));
+                    break;
+                case "match":
+                    matchStart = Integer.parseInt(attributes.getValue("start"));
+                    matchEnd = Integer.parseInt(attributes.getValue("end"));
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -192,7 +207,6 @@ public class Issue {
         public void endElement(String uri, String localName, String qName) throws SAXException {
             super.endElement(uri, localName, qName);
             if (qName.equals("item")) {
-                inItem = false;
                 Suggestion suggestion = new Suggestion();
                 suggestion.setOption(option);
                 suggestion.setDescription(description);

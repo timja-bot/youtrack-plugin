@@ -307,9 +307,9 @@ public class YoutrackIssueUpdater {
 
                         if (prefixCommands != null && prefixLength != 0) {
                             String prefix = line.substring(0, prefixLength).trim().toLowerCase();
-                            for (String prefixKey : prefixCommands.keySet()) {
-                                if (prefix.endsWith(prefixKey)) {
-                                    extraPrefixCommand = prefixCommands.get(prefixKey);
+                            for (Map.Entry<String, String> entry : prefixCommands.entrySet()) {
+                                if (prefix.endsWith(entry.getKey())) {
+                                    extraPrefixCommand = entry.getValue();
                                     break;
                                 }
                             }
@@ -321,17 +321,18 @@ public class YoutrackIssueUpdater {
                         // until we see another "#"
                         // We can keep moving i at this point since any lines we process
                         // shouldn't be considered for commands.
-                        for (++i, comment = ""; i < lines.length; ++i) {
+                        StringBuilder commentBuilder = new StringBuilder();
+                        for (++i; i < lines.length; ++i) {
                             String nextLine = lines[i];
                             if (nextLine.contains("#")) {
                                 // Reset so we process this line again in the next iteration.
                                 --i;
                                 break;
                             }
-                            comment += nextLine + "\n";
+                            commentBuilder.append(nextLine).append("\n");
                         }
 
-                        comment = comment.trim();
+                        comment = commentBuilder.toString().trim();
                         if (comment.isEmpty()) {
                             comment = null;
                         }
