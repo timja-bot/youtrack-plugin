@@ -368,7 +368,6 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             result.setTrackCommits(trackCommits);
             result.setProject(project);
             result.setPrefixCommandPairs(prefixCommandPairs);
-            result.setCommentText(commentText);
             result.setCommentTextSecure(commentTextSecure);
             result.setFailureMode(failureMode);
         }
