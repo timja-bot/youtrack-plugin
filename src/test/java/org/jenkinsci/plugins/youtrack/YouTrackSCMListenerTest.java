@@ -7,15 +7,21 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.tasks.Publisher;
 import hudson.util.DescribableList;
+import hudson.util.Secret;
+
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -29,6 +35,8 @@ import static org.mockito.Mockito.*;
 /**
  * Test the SCM listener.
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Secret.class})
 public class YouTrackSCMListenerTest {
     @Test
     public void testExecuteCommand() throws Exception {
@@ -70,7 +78,9 @@ public class YouTrackSCMListenerTest {
 
         when(changeLogSet.iterator()).thenReturn(scmLogEntries.iterator());
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setCommandsEnabled(true);
 
         youTrackSite.setPluginEnabled(true);
@@ -109,7 +119,9 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setCommentEnabled(true);
 
@@ -151,7 +163,9 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setCommentEnabled(true);
 
@@ -207,7 +221,9 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setCommentEnabled(true);
 
@@ -223,7 +239,7 @@ public class YouTrackSCMListenerTest {
         doReturn(project).when(build).getProject();
 
 
-        final List<Command> commentCommands = new ArrayList<Command>();
+        final List<Command> commentCommands = new ArrayList<>();
         //TODO: replace by verify
         doAnswer(new Answer() {
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -290,7 +306,9 @@ public class YouTrackSCMListenerTest {
 
         when(changeLogSet.iterator()).thenReturn(scmLogEntries.iterator());
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setCommandsEnabled(true);
 
         youTrackSite.setPluginEnabled(true);
@@ -322,7 +340,9 @@ public class YouTrackSCMListenerTest {
         user.setUsername("tester");
         user.setLoggedIn(true);
 
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setCommandsEnabled(true);
         youTrackSite.setPluginEnabled(true);
 
@@ -418,8 +438,9 @@ public class YouTrackSCMListenerTest {
         ChangeLogSet logSet = mock(ChangeLogSet.class);
         YouTrackServer youTrackServer = mock(YouTrackServer.class);
 
-
-        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", "test", "http://test.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite youTrackSite = new YouTrackSite("testsite", "test", secret, "http://test.com");
         youTrackSite.setCommandsEnabled(true);
         youTrackSite.setCommentEnabled(true);
         youTrackSite.setPluginEnabled(true);

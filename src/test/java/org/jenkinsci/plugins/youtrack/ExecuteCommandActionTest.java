@@ -8,11 +8,17 @@ import hudson.model.Action;
 import hudson.model.BuildListener;
 import hudson.model.FreeStyleBuild;
 import hudson.scm.ChangeLogSet;
+import hudson.util.Secret;
+
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Project;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,6 +28,9 @@ import java.util.ArrayList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Secret.class})
 
 public class ExecuteCommandActionTest {
     @Test
@@ -53,8 +62,9 @@ public class ExecuteCommandActionTest {
 
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
-
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         YouTrackServer server = new YouTrackServer("test");
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -78,8 +88,9 @@ public class ExecuteCommandActionTest {
 
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
-
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         site.setPluginEnabled(true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -108,7 +119,9 @@ public class ExecuteCommandActionTest {
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("", "", "", "",""));
 
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         site.setPluginEnabled(true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -139,7 +152,9 @@ public class ExecuteCommandActionTest {
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "branch/hotfix/YT-1", "This is fixed",""));
 
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         site.setPluginEnabled(true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -176,8 +191,9 @@ public class ExecuteCommandActionTest {
 
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Fixed", "", "${YOUTRACK_CHANGES}", "This is fixed",""));
-
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         site.setPluginEnabled(true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -216,7 +232,11 @@ public class ExecuteCommandActionTest {
 
         ExecuteCommandAction commandAction = spy(new ExecuteCommandAction("Version: 2", "Version: 1", "", "Upgrade versions",""));
 
-        YouTrackSite site = new YouTrackSite("test", "test", "test", "test");
+
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("test");
+
+        YouTrackSite site = new YouTrackSite("test", "test", secret, "test");
         site.setPluginEnabled(true);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

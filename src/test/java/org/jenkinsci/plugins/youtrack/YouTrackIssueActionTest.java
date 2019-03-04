@@ -1,24 +1,35 @@
 package org.jenkinsci.plugins.youtrack;
 
-import hudson.model.FreeStyleProject;
 import org.jenkinsci.plugins.youtrack.youtrackapi.Issue;
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-import javax.servlet.ServletException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import javax.servlet.ServletException;
 
+import hudson.model.FreeStyleProject;
+import hudson.util.Secret;
+
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Secret.class})
 public class YouTrackIssueActionTest {
     @Test
     public void testNotConfigured() throws IOException, ServletException {
@@ -31,7 +42,9 @@ public class YouTrackIssueActionTest {
         when(response.getWriter()).thenReturn(printWriter);
 
         YouTrackIssueAction youTrackIssueAction = spy(new YouTrackIssueAction(project));
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://www.example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://www.example.com");
         youTrackSite.setPluginEnabled(false);
         doReturn(youTrackSite).when(youTrackIssueAction).getYouTrackSite();
 
@@ -54,7 +67,9 @@ public class YouTrackIssueActionTest {
         when(response.getWriter()).thenReturn(printWriter);
 
         YouTrackIssueAction youTrackIssueAction = spy(new YouTrackIssueAction(project));
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://www.example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://www.example.com");
         youTrackSite.setPluginEnabled(true);
         doReturn(youTrackSite).when(youTrackIssueAction).getYouTrackSite();
         doReturn(youTrackServer).when(youTrackIssueAction).getYouTrackServer(youTrackSite);
@@ -78,7 +93,9 @@ public class YouTrackIssueActionTest {
         when(response.getWriter()).thenReturn(printWriter);
 
         YouTrackIssueAction youTrackIssueAction = spy(new YouTrackIssueAction(project));
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://www.example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://www.example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setStateFieldName("State");
 

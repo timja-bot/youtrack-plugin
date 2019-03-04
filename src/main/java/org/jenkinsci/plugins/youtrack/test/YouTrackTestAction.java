@@ -66,7 +66,7 @@ public class YouTrackTestAction extends TestAction {
             throws ServletException, IOException {
         YouTrackSite youTrackSite = YouTrackSite.get(data.getBuild().getProject());
         YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-        User mainUser = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+        User mainUser = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
 
         Command issue = youTrackServer.createIssue(youTrackSite.getName(), mainUser, youTrackSite.getProject(), "Test case: " + id, careResult.getErrorStackTrace(), null, null);
         youtrackIssueId = issue.getIssueId();

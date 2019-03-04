@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import hudson.util.Secret;
 import lombok.Getter;
 import lombok.Setter;
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
@@ -14,7 +15,7 @@ public class YouTrackSite {
     @Getter @Setter private String name;
     @Getter @Setter private String url;
     @Getter @Setter private String username;
-    @Getter @Setter private String password;
+    @Getter @Setter private Secret password;
     @Getter @Setter private transient boolean pluginEnabled;
     @Getter @Setter private transient boolean runAsEnabled;
     @Getter @Setter private transient boolean commandsEnabled;
@@ -33,7 +34,7 @@ public class YouTrackSite {
     @Getter @Setter private YoutrackBuildFailureMode failureMode;
 
     @DataBoundConstructor
-    public YouTrackSite(String name, String username, String password, String url) {
+    public YouTrackSite(String name, String username, Secret password, String url) {
         this.username = username;
         this.password = password;
         this.url = url;

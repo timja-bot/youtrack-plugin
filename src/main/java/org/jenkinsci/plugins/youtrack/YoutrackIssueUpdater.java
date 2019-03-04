@@ -90,7 +90,7 @@ public class YoutrackIssueUpdater {
         Iterator<? extends ChangeLogSet.Entry> changeLogIterator = changeLogSet.iterator();
 
         YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
-        User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+        User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
         if (user == null || !user.isLoggedIn()) {
             listener.getLogger().append("FAILED: log in with set YouTrack user");
             youTrackSite.failed(build);

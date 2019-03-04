@@ -125,7 +125,7 @@ public class YouTrackBuildUpdater extends Recorder {
         }
 
         YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
-        User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+        User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
         if (user == null || !user.isLoggedIn()) {
             listener.getLogger().println("FAILED: to log in to youtrack");
             youTrackSite.failed(build);
@@ -240,7 +240,7 @@ public class YouTrackBuildUpdater extends Recorder {
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
             if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user != null) {
                     List<BuildBundle> bundles = youTrackServer.getBuildBundles(user);
                     for (BuildBundle bundle : bundles) {

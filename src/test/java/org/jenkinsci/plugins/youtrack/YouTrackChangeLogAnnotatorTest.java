@@ -6,16 +6,24 @@ import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
 import hudson.model.Project;
 import hudson.scm.ChangeLogSet;
+import hudson.util.Secret;
+
 import junit.framework.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Secret.class})
 public class YouTrackChangeLogAnnotatorTest {
 
     /**
@@ -28,8 +36,10 @@ public class YouTrackChangeLogAnnotatorTest {
         ChangeLogSet.Entry entry = mock(ChangeLogSet.Entry.class);
         MarkupText markupText = new MarkupText("ISSUE-1");
         Project project = mock(Project.class);
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
 
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
 
         when(build.getProject()).thenReturn(project);
@@ -52,9 +62,10 @@ public class YouTrackChangeLogAnnotatorTest {
         MarkupText markupText = new MarkupText("ISSUE-1");
         Project project = mock(Project.class);
 
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
 
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         when(build.getProject()).thenReturn(project);
@@ -83,10 +94,10 @@ public class YouTrackChangeLogAnnotatorTest {
         ChangeLogSet.Entry entry = mock(ChangeLogSet.Entry.class);
         MarkupText markupText = new MarkupText("ISSUE-1");
         Project project = mock(Project.class);
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
 
-
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setAnnotationsEnabled(false);
 
@@ -115,8 +126,9 @@ public class YouTrackChangeLogAnnotatorTest {
         ChangeLogSet.Entry entry = mock(ChangeLogSet.Entry.class);
         MarkupText markupText = new MarkupText("ISSUE-1");
         Project project = mock(Project.class);
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setAnnotationsEnabled(true);
 
@@ -154,7 +166,9 @@ public class YouTrackChangeLogAnnotatorTest {
         MarkupText markupText = new MarkupText("#ISSUE-1 Fixed");
         Project project = mock(Project.class);
 
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setAnnotationsEnabled(true);
 
@@ -193,7 +207,10 @@ public class YouTrackChangeLogAnnotatorTest {
         MarkupText markupText = new MarkupText("#ISSUE-1 duplicates ISSUE-2");
         Project project = mock(Project.class);
 
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setAnnotationsEnabled(true);
 
@@ -231,7 +248,9 @@ public class YouTrackChangeLogAnnotatorTest {
         MarkupText markupText = new MarkupText("#ISSUE-1 Fixed\nBla bla ISSUE-2");
         Project project = mock(Project.class);
 
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(true);
         youTrackSite.setAnnotationsEnabled(true);
 
@@ -243,7 +262,7 @@ public class YouTrackChangeLogAnnotatorTest {
         doReturn("http://jenkins.example.com/").when(youTrackChangeLogAnnotator).getRootUrl();
 
         when(youTrackChangeLogAnnotator.getSiteForProject(project)).thenReturn(youTrackSite);
-        ArrayList<org.jenkinsci.plugins.youtrack.youtrackapi.Project> projects = new ArrayList<org.jenkinsci.plugins.youtrack.youtrackapi.Project>();
+        ArrayList<org.jenkinsci.plugins.youtrack.youtrackapi.Project> projects = new ArrayList<>();
         org.jenkinsci.plugins.youtrack.youtrackapi.Project youtrackProject = new org.jenkinsci.plugins.youtrack.youtrackapi.Project();
         youtrackProject.setShortName("ISSUE");
         projects.add(youtrackProject);

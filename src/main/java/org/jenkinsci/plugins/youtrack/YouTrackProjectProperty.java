@@ -197,7 +197,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
             if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user != null && user.isLoggedIn()) {
                     List<Project> projects = youTrackServer.getProjects(user);
                     for (Project youtrackProject : projects) {
@@ -265,7 +265,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
             if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user != null) {
                     StateBundle bundle = youTrackServer.getStateBundleForField(user, youTrackSite.getStateFieldName());
                     if (bundle != null) {
@@ -291,7 +291,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
         if (youTrackSite != null) {
             YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
             if (user != null) {
                 List<Project> projects = youTrackServer.getProjects(user);
                 for (Project youtrackProject : projects) {
@@ -309,7 +309,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
         if (youTrackSite != null) {
             YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
             if (user != null) {
                 List<Field> fields = youTrackServer.getFields(user);
                 for (Field field : fields) {
@@ -327,7 +327,7 @@ public class YouTrackProjectProperty extends JobProperty<AbstractProject<?, ?>> 
         AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
         if (youTrackSite != null) {
             YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
             if (user != null) {
                 List<Group> groups = youTrackServer.getGroups(user);
                 for (Group group : groups) {

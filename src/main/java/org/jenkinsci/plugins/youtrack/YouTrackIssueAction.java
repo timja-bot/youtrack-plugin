@@ -76,7 +76,7 @@ public class YouTrackIssueAction implements Action {
                 }
 
                 YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user == null || !user.isLoggedIn()) {
                     rsp.getWriter().write("Could not log in to YouTrack");
                     return;

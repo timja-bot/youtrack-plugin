@@ -63,7 +63,7 @@ public class ExecuteCommandAction extends Builder {
             if (youTrackSite.isPluginEnabled()) {
 
                 YouTrackServer youTrackServer = getYouTrackServer(youTrackSite);
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user != null && user.isLoggedIn()) {
                     EnvVars environment = build.getEnvironment(listener);
 
@@ -204,7 +204,7 @@ public class ExecuteCommandAction extends Builder {
             AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
             if (youTrackSite != null) {
                 YouTrackServer youTrackServer = new YouTrackServer(youTrackSite.getUrl());
-                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+                User user = youTrackServer.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
                 if (user != null) {
                     List<Suggestion> suggestions = youTrackServer.searchSuggestions(user, value);
                     for (Suggestion suggestion : suggestions) {

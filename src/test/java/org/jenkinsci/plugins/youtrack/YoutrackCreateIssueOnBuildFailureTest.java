@@ -3,13 +3,19 @@ package org.jenkinsci.plugins.youtrack;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.*;
+import hudson.util.Secret;
+
 import org.jenkinsci.plugins.youtrack.youtrackapi.User;
 import org.jenkinsci.plugins.youtrack.youtrackapi.YouTrackServer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -22,6 +28,8 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.*;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Secret.class})
 public class YoutrackCreateIssueOnBuildFailureTest {
 
     @Test
@@ -33,7 +41,10 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null, false));
 
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -54,8 +65,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null,false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -77,8 +89,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILURE, null, null,false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -101,8 +114,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -128,8 +142,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("PROJECT", "SUMMARY", "DESCRIPTION", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -143,9 +158,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         doReturn(server).when(youtrackCreateIssueOnBuildFailure).getYouTrackServer(youTrackSite);
 
 
-        final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
+        final List<CreateIssueCommand> commandList = new ArrayList<>();
         Answer<Command> answer = new Answer<Command>() {
-            public Command answer(InvocationOnMock invocation) throws Throwable {
+            public Command answer(InvocationOnMock invocation) {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];
@@ -179,8 +194,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("project", "${VAR1}", "${VAR2}", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, "${VAR3}",false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -198,9 +214,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         doReturn(server).when(youtrackCreateIssueOnBuildFailure).getYouTrackServer(youTrackSite);
 
 
-        final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
+        final List<CreateIssueCommand> commandList = new ArrayList<>();
         Answer<Command> answer = new Answer<Command>() {
-            public Command answer(InvocationOnMock invocation) throws Throwable {
+            public Command answer(InvocationOnMock invocation) {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];
@@ -238,8 +254,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
 
         YoutrackCreateIssueOnBuildFailure youtrackCreateIssueOnBuildFailure =
                 spy(new YoutrackCreateIssueOnBuildFailure("project", "", "", YoutrackCreateIssueOnBuildFailure.FAILUREORUNSTABL, null, null,false));
-
-        YouTrackSite youTrackSite = new YouTrackSite("site", "user", "password", "http://example.com");
+        Secret secret = PowerMockito.mock(Secret.class);
+        when(secret.getPlainText()).thenReturn("password");
+        YouTrackSite youTrackSite = new YouTrackSite("site", "user", secret, "http://example.com");
         youTrackSite.setPluginEnabled(false);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -258,9 +275,9 @@ public class YoutrackCreateIssueOnBuildFailureTest {
         doReturn("buildUrl").when(youtrackCreateIssueOnBuildFailure).getAbsoluteUrl(build);
 
 
-        final List<CreateIssueCommand> commandList = new ArrayList<CreateIssueCommand>();
+        final List<CreateIssueCommand> commandList = new ArrayList<>();
         Answer<Command> answer = new Answer<Command>() {
-            public Command answer(InvocationOnMock invocation) throws Throwable {
+            public Command answer(InvocationOnMock invocation) {
                 CreateIssueCommand command = new CreateIssueCommand();
                 command.project = (String) invocation.getArguments()[2];
                 command.summary = (String) invocation.getArguments()[3];

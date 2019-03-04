@@ -78,7 +78,7 @@ public class YoutrackCreateIssueOnBuildFailure extends Notifier {
 
         if (shouldCreateIssue(build)) {
             YouTrackServer server = getYouTrackServer(youTrackSite);
-            User user = server.login(youTrackSite.getUsername(), youTrackSite.getPassword());
+            User user = server.login(youTrackSite.getUsername(), youTrackSite.getPassword().getPlainText());
             if (user == null) {
                 listener.getLogger().println("Could not login user to YouTrack");
                 return true;
