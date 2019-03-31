@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>youtrack-plugin</artifactId>
-    <version>0.7.3</version>
+    <version>0.7.4-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -108,7 +108,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/youtrack-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/youtrack-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/youtrack-plugin</url>
-      <tag>youtrack-plugin-0.7.3</tag>
+      <tag>youtrack-plugin-0.7.1</tag>
   </scm>
 
 </project>
