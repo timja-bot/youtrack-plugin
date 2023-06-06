@@ -1,6 +1,6 @@
 package org.jenkinsci.plugins.youtrack;
 
-import com.gargoylesoftware.htmlunit.html.*;
+import org.htmlunit.html.*;
 import hudson.model.FreeStyleProject;
 import org.junit.Rule;
 import org.junit.Test;
